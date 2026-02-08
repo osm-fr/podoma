@@ -49,7 +49,7 @@ function macroChangesCsv (mode, project, oplProject, csvFeatures, csvUsers, csvM
     if (mode == "init"){
         script += `
         echo "   => [\$((\$(date -d now +%s) - \$process_start_t0))s] Init changes table in database"
-        ${PSQL} -v features_table="${features_table}" -v members_table="${members_table}" -v boundary_table="${boundary_table}" -v labels_table="${labels_table}" -f "${__dirname}/22_changes_init.sql"
+        ${PSQL} -v features_table="${features_table}" -v update_table="${update_table}" -v members_table="${members_table}" -v boundary_table="${boundary_table}" -v labels_table="${labels_table}" -f "${__dirname}/22_changes_init.sql"
         `;
         if (project.statistics.length){
             script += `${PSQL} -v features_table="${features_table}" -v changes_table="${changes_table}" -f "${__dirname}/22_changes_init_linear.sql"`
@@ -258,29 +258,35 @@ Object.values(projects).forEach(project => {
     }
 });
 
-projectsQry = `${projectsQry.substring(0, projectsQry.length-1)} ON CONFLICT (project_id) DO UPDATE SET start_date=EXCLUDED.start_date, end_date=EXCLUDED.end_date`;
-pgPool.query(projectsQry, (err, res) => {
-    if (err){
-        throw new Error(`Error when installing projects: ${err}`);
-    }
-    console.log(projectLength+" project(s) installed");
-});
+if (projectLength > 0){
+    projectsQry = `${projectsQry.substring(0, projectsQry.length-1)} ON CONFLICT (project_id) DO UPDATE SET start_date=EXCLUDED.start_date, end_date=EXCLUDED.end_date`;
+    pgPool.query(projectsQry, (err, res) => {
+        if (err){
+            throw new Error(`Error when installing projects: ${err}`);
+        }
+        console.log(projectLength+" project(s) installed");
+    });
+}
 
-projectPointsQry = `${projectPointsQry.substring(0, projectPointsQry.length-1)} ON CONFLICT (project_id, contrib, label) DO UPDATE SET points=EXCLUDED.points`;
-pgPool.query(projectPointsQry, (err, res) => {
-    if (err){
-        throw new Error(`Error when installing projects points: ${err}`);
-    }
-    console.log(projectPointsLength+" project(s) point(s) installed");
-});
+if (projectPointsLength > 0){
+    projectPointsQry = `${projectPointsQry.substring(0, projectPointsQry.length-1)} ON CONFLICT (project_id, contrib, label) DO UPDATE SET points=EXCLUDED.points`;
+    pgPool.query(projectPointsQry, (err, res) => {
+        if (err){
+            throw new Error(`Error when installing projects points: ${err}`);
+        }
+        console.log(projectPointsLength+" project(s) point(s) installed");
+    });
+}
 
-projectTeamsQry = `${projectTeamsQry.substring(0, projectTeamsQry.length-1)} ON CONFLICT (project_id, team, username) DO NOTHING`;
-pgPool.query(projectTeamsQry, (err, res) => {
-    if (err){
-        throw new Error(`Error when installing projects teams: ${err}`);
-    }
-    console.log(projectTeamsLength+" project(s) team(s) installed");
-});
+if (projectTeamsLength > 0){
+    projectTeamsQry = `${projectTeamsQry.substring(0, projectTeamsQry.length-1)} ON CONFLICT (project_id, team, username) DO NOTHING`;
+    pgPool.query(projectTeamsQry, (err, res) => {
+        if (err){
+            throw new Error(`Error when installing projects teams: ${err}`);
+        }
+        console.log(projectTeamsLength+" project(s) team(s) installed");
+    });
+}
 
 // Script text
 const separator = `echo "-------------------------------------------------------------------"

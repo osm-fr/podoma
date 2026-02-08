@@ -14,6 +14,7 @@ CREATE MATERIALIZED VIEW :changes_table as
         contrib,
         geom
         FROM :features_table
+        WINDOW wbkwd AS (PARTITION BY osmid ORDER BY version desc)
         )
     SELECT
         osmid,
