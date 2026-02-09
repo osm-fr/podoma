@@ -41,7 +41,7 @@ CREATE MATERIALIZED VIEW :changes_table as
             else 0
         end as geom_len,
         case
-            when geom is not null and ST_IsClosed(geom) and St_geometrytype(geom) != 'ST_Point' then St_Area(ST_buildarea(geom)::geography)
+            when geom is not null and ST_IsClosed(geom) and St_geometrytype(geom) != 'ST_Point' then coalesce(St_Area(ST_buildarea(geom)::geography),0)
             else 0
         end as geom_area,
         case

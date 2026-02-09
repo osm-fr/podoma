@@ -83,9 +83,9 @@ INSERT INTO pdm_user_contribs(project_id, userid, ts, label, contribution, amoun
         end) as amount_delta,
       SUM(cc.geom_len_delta) as len_delta,
       SUM(cc.geom_area_delta) AS area_delta,
-      SUM(cc.nb * pp.points) AS points
+      SUM(cc.nb * coalesce(pp.points,0)) AS points
     FROM contributions cc
-    LEFT JOIN pdm_projects_points pp ON cc.contrib=pp.contrib AND cc.label=pp.label AND pp.project_id=:project_id
+    LEFT JOIN pdm_projects_points pp ON cc.contrib=pp.contrib AND coalesce(cc.label,'global')=coalesce(pp.label,'global') AND pp.project_id=:project_id
     GROUP BY project_id, cc.ts, cc.userid, cc.label, cc.contrib;
 
 -- Main labels count
