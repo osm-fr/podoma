@@ -8,26 +8,40 @@ CREATE INDEX ON pdm_boundary_subdivide using btree(osm_id);
 
 -- Boundary stats for tiles
 CREATE MATERIALIZED VIEW pdm_boundary_tiles AS
-WITH minc AS (
-	SELECT DISTINCT ON (project_id, boundary, label) project_id, boundary, label, amount
-	FROM pdm_feature_counts_per_boundary
-	ORDER BY project_id, boundary, label, ts
+WITH boundaries as (
+	SELECT DISTINCT fb.project_id, fb.boundary, b.name, b.admin_level, b.centre as geom
+	FROM pdm_feature_counts_per_boundary fb
+	JOIN pdm_boundary b ON b.osm_id=fb.boundary
 ),
-maxc AS (
-	SELECT DISTINCT ON (project_id, boundary, label) project_id, boundary, label, amount
-	FROM pdm_feature_counts_per_boundary
-	ORDER BY project_id, boundary, label, ts desc
-),
-stats AS (
-	SELECT project_id, boundary, label, json_object(array_agg(ts::date::text), array_agg(amount::text)) AS stats
-	FROM pdm_feature_counts_per_boundary
-	GROUP BY project_id, boundary, label
+stats as (
+	SELECT 
+		b.boundary,
+		d.project_id,
+		NULL as label,
+		COALESCE(fb.amount, 0) as amount,
+		d.ts,
+		b.name,
+		b.admin_level,
+		b.geom,
+		COALESCE(last_value(fb.amount) over project_window, 0) - COALESCE(first_value(fb.amount) over project_window, 0) as nb
+	FROM pdm_counts_dates d
+	JOIN boundaries b ON b.project_id=d.project_id
+	LEFT JOIN pdm_feature_counts_per_boundary fb ON fb.project_id=d.project_id AND fb.ts=d.ts AND fb.boundary=b.boundary
+	WHERE fb.label IS NULL
+	WINDOW project_window AS (PARTITION BY d.project_id, b.boundary ORDER BY d.ts ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 )
-SELECT s.project_id, s.boundary, s.label, b.id, b.name, b.admin_level, s.stats, maxc.amount - minc.amount AS nb, b.centre AS geom
+SELECT
+	s.boundary as id,
+	s.boundary as boundary,
+	s.project_id,
+	s.label,
+	s.name,
+	s.admin_level,
+	s.geom,
+	json_object(array_agg(s.ts::date::text), array_agg(s.amount::text)) AS stats,
+	s.nb
 FROM stats s
-JOIN minc ON minc.project_id = s.project_id AND minc.boundary = s.boundary AND coalesce(minc.label,'')=coalesce(s.label,'')
-JOIN maxc ON maxc.project_id = s.project_id AND maxc.boundary = s.boundary AND coalesce(maxc.label,'')=coalesce(s.label,'')
-JOIN pdm_boundary b ON s.boundary = b.osm_id;
+GROUP BY s.project_id, s.label, s.boundary, s.nb, s.name, s.admin_level, s.geom;
 
 CREATE INDEX pdm_boundary_tiles_project_idx ON pdm_boundary_tiles(project_id);
 CREATE INDEX pdm_boundary_tiles_geom_idx ON pdm_boundary_tiles USING GIST(geom);

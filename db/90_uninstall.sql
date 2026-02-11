@@ -5,10 +5,10 @@ DROP TABLE IF EXISTS pdm_user_names CASCADE;
 DROP TABLE IF EXISTS pdm_user_contribs CASCADE;
 
 -- User badges
-DROP TABLE IF EXISTS pdm_user_badges CASCADE;
 DROP FUNCTION IF EXISTS pdm_get_badges CASCADE;
 
 -- Features counts
+DROP TABLE IF EXISTS pdm_counts_dates CASCADE;
 DROP TABLE IF EXISTS pdm_feature_counts CASCADE;
 DROP TABLE IF EXISTS pdm_feature_counts_per_boundary CASCADE;
 

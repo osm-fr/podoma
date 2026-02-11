@@ -50,10 +50,14 @@ CREATE TABLE pdm_user_contribs(
 CREATE INDEX ON pdm_user_contribs(project_id);
 CREATE INDEX ON pdm_user_contribs(userid);
 
--- User badges
-DROP TABLE IF EXISTS pdm_user_badges;
-
 -- Overall counts
+CREATE TABLE pdm_counts_dates (
+	project_id int NOT NULL,
+	ts timestamp NOT NULL,
+	ts_past timestamp NOT NULL
+);
+CREATE INDEX ON pdm_counts_dates using btree(project_id, ts);
+
 CREATE TABLE pdm_feature_counts(
 	project_id int NOT NULL,
 	ts TIMESTAMP NOT NULL,

@@ -3,6 +3,7 @@
 ANALYSE :changes_table;
 ANALYSE :labels_table;
 
+DELETE FROM pdm_counts_dates WHERE project_id=:project_id AND ts BETWEEN :start_date AND :end_date;
 DELETE FROM pdm_feature_counts WHERE project_id=:project_id AND ts BETWEEN :start_date AND :end_date;
 DELETE FROM pdm_feature_counts_per_boundary WHERE project_id=:project_id AND ts BETWEEN :start_date AND :end_date;
 
