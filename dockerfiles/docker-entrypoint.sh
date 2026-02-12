@@ -12,7 +12,7 @@ echo "Executing ${command} command"
 
 case $command in
 "install")
-    psql -d $DB_URL -f ./db/00_init.sql
+    psql -d $DB_URL -f ./db/01_setup_schema.sql
     ;;
 "init")
     npm run features:update $otherArgs && \

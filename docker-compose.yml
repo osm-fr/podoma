@@ -8,12 +8,15 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
+      - ./db/00_init.sql:/docker-entrypoint-initdb.d/00_init.sql
     environment:
       - POSTGRES_DB=pdm
       - POSTGRES_PASSWORD=pgpassword
       
   pdm:
     image: pdm/server:latest
+    build:
+      context: .
     restart: always
     depends_on:
       - pgsqldb
