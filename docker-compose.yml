@@ -26,6 +26,7 @@ services:
       - "3000:3000"
     volumes:
       - pdm-data:/data/files/pdm
+      - ./workdir:/tmp/pdm
     environment:
       - DB_URL=postgres://postgres:pgpassword@pgsqldb:5432/pdm
     command: "run"
