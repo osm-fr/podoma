@@ -8,7 +8,7 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ./db/00_init.sql:/docker-entrypoint-initdb.d/00_init.sql
+      - ./db/00_init_postgis.sql:/docker-entrypoint-initdb.d/00_init_postgis.sql
     environment:
       - POSTGRES_DB=pdm
       - POSTGRES_PASSWORD=pgpassword
