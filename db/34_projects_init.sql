@@ -1,3 +1,4 @@
+DELETE FROM pdm_counts_dates WHERE project_id=:project_id;
 DELETE FROM pdm_feature_counts WHERE project_id=:project_id;
 DELETE FROM pdm_feature_counts_per_boundary WHERE project_id=:project_id;
 DELETE FROM pdm_mapper_counts WHERE project_id=:project_id;

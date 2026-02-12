@@ -3,6 +3,10 @@
 ANALYSE pdm_user_names;
 ANALYSE :features_table;
 
+DELETE FROM pdm_mapper_counts WHERE project_id=:project_id AND ts BETWEEN :start_date AND :end_date;
+DELETE FROM pdm_mapper_counts_per_boundary WHERE project_id=:project_id AND ts BETWEEN :start_date AND :end_date;
+DELETE FROM pdm_user_contribs WHERE project_id=:project_id AND ts BETWEEN :start_date AND :end_date;
+
 -- Handle dates list
 CREATE TEMP TABLE IF NOT EXISTS pdm_mapper_counts_dates (ts timestamp, ts_past timestamp, ts1d timestamp, ts30d timestamp, tswindow timestamp); TRUNCATE TABLE pdm_mapper_counts_dates;
 INSERT INTO pdm_mapper_counts_dates (ts, ts_past) VALUES :dates_list;
@@ -21,8 +25,6 @@ WITH uknownusers AS (
 UPDATE pdm_projects_teams SET userid=uknownusers.userid FROM uknownusers WHERE uknownusers.username=pdm_projects_teams.username;
 
 -- Establishing user contributions in every running project
-DELETE FROM pdm_user_contribs WHERE project_id=:project_id AND ts >= :start_date;
-
 WITH features as (
     SELECT d.ts::date, fc.osmid, fc.version, fc.userid, fc.contrib, fl.contrib as label_contrib, coalesce(fl.label,'no-label') as label, fc.geom_len, fc.geom_area, fc.geom_len_delta, fc.geom_area_delta
     FROM :changes_table fc
@@ -154,5 +156,6 @@ INSERT INTO pdm_mapper_counts_per_boundary (project_id, boundary, ts, label, amo
   GROUP BY fb.boundary, d.ts
 ON CONFLICT (project_id, boundary, ts, label) DO UPDATE SET amount=EXCLUDED.amount, amount_1d=EXCLUDED.amount_1d, amount_30d=EXCLUDED.amount_30d;
 
--- Clean up
+-- Save dates and clean up
+INSERT INTO pdm_counts_dates (project_id, ts, ts_past) SELECT :project_id AS project_id, ts, ts_past FROM pdm_mapper_counts_dates;
 DROP TABLE pdm_mapper_counts_dates;
