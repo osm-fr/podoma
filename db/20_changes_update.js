@@ -74,7 +74,7 @@ function macroChangesCsv (mode, project, oplProject, csvFeatures, csvUsers, csvM
         ${PSQL} -v features_table="${features_table}" -v update_table="${update_table}" -v members_table="${members_table}" -v changes_table="${changes_table}" -v boundary_table="${boundary_table}" -v labels_table="${labels_table}" -f "${__dirname}/22_changes_index.sql"
         `;
 
-        if (project.database.hasOwnProperty("labels")){
+        if (project.database.hasOwnProperty("labels") && project.database.labels){
             Object.keys(project.database.labels).forEach(label => {
                 script += `
                 echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Labelling ${label}"
@@ -130,7 +130,7 @@ function macroChangesCsv (mode, project, oplProject, csvFeatures, csvUsers, csvM
             `;
         }
 
-        if (project.database.hasOwnProperty("labels")){
+        if (project.database.hasOwnProperty("labels") && project.database.labels){
             Object.keys(project.database.labels).forEach(label => {
                 script += `
                 echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Labelling ${label}"
@@ -162,7 +162,7 @@ function macroChangesCsv (mode, project, oplProject, csvFeatures, csvUsers, csvM
         }
     }
 
-    if (project.database.hasOwnProperty("labels")){
+    if (project.database.hasOwnProperty("labels") && project.statistics.labels){
         // It needs features to be populated in main table to get previous versions and can't rely on features_table_tmp only
         script += `
         echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Update contrib on labels"
@@ -233,13 +233,13 @@ Object.values(projects).forEach(project => {
     projectsQry += `(${project.id}, '${project.name}', '${project.start_date}', ${project_end_date}),`;
     projectLength++;
 
-    if (project.statistics.hasOwnProperty("points")){
+    if (project.statistics.hasOwnProperty("points") && project.statistics.points){
         Object.entries(project.statistics.points).forEach(([contrib,value]) => {
             projectPointsQry += `(${project.id}, '${contrib}', NULL, ${value}),`;
             projectPointsLength++;
         });
     }
-    if (project.statistics.hasOwnProperty("points_labels")){
+    if (project.statistics.hasOwnProperty("points_labels") && project.statistics.point_labels){
         Object.entries(project.statistics.point_labels).forEach(([label,label_points]) => {
             Object.entries(label_points).forEach(([contrib, value]) => {
                 projectPointsQry += `(${project.id}, '${contrib}', '${label}', ${value}),`;
@@ -248,7 +248,7 @@ Object.values(projects).forEach(project => {
         });
     }
 
-    if (project.hasOwnProperty("teams")){
+    if (project.hasOwnProperty("teams") && project.teams){
         Object.entries(project.teams).forEach(([team,usernames]) => {
             usernames.forEach((username) => {
                 projectTeamsQry += `(${project.id}, '${team}', '${username}'),`;
@@ -321,7 +321,7 @@ if (( \$nbProjects < 1 )); then
 else
     echo "\$nbProjects projects known"
 fi
-if (( $nbPoints < 1 )); then
+if (( \$nbPoints < 1 )); then
     echo "WARN: No declared points for projects contributions"
 else
     echo "\$nbPoints points known"
@@ -357,8 +357,14 @@ if (CONFIG.OSH_PBF_AUTHORIZED){
             -o "${COOKIES_FS}"
 
         osh_cookie=\$(cat "${COOKIES_FS}" | cut -d ';' -f 1)
-        osh_headers="--header=Cookie: \${osh_cookie}"
-        rm -f "${COOKIES_FS}"
+
+        if [[ \${osh_cookie} == "<"* ]] ; then
+            echo "ERROR: Failed authenticating to OSM - More details in ${COOKIES_FS}"
+            exit 1
+        else
+            osh_headers="--header=Cookie: \${osh_cookie}"
+            rm -f "${COOKIES_FS}"
+        fi
         `;
 }
 script += `

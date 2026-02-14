@@ -634,7 +634,7 @@ Voir ci-dessous pour la portée de chacune.
 La base de données s'appuie sur PostgreSQL. Pour installer la base :
 
 ```bash
-psql -d pdm -f db/00_init.sql
+psql -d pdm -f db/01_setup_schema.sql
 ```
 
 Le script suivant est à lancer pour permettre l'import imposm :

@@ -8,12 +8,15 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
+      - ./db/00_init_postgis.sql:/docker-entrypoint-initdb.d/00_init_postgis.sql
     environment:
       - POSTGRES_DB=pdm
       - POSTGRES_PASSWORD=pgpassword
       
   pdm:
     image: pdm/server:latest
+    build:
+      context: .
     restart: always
     depends_on:
       - pgsqldb
@@ -23,6 +26,7 @@ services:
       - "3000:3000"
     volumes:
       - pdm-data:/data/files/pdm
+      - workdir:/tmp/pdm
     environment:
       - DB_URL=postgres://postgres:pgpassword@pgsqldb:5432/pdm
     command: "run"
@@ -42,6 +46,7 @@ services:
 volumes:
   db-data:
   pdm-data:
+  workdir:
 
 networks:
   oim-internal:

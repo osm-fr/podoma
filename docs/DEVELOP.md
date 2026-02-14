@@ -640,7 +640,7 @@ docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e 
 Database relies on PostgreSQL. To install the schema before first run:
 
 ```bash
-psql -d pdm -f db/00_init.sql
+psql -d pdm -f db/01_setup_schema.sql
 ```
 
 The following script is to run to retreive and update changes:

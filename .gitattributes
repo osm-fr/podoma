@@ -1,0 +1,4 @@
+* text=auto
+
+# Bash files should keep LF line endings also on Windows, otherwise once copied in the Docker image they won't be runnable
+*.sh text eol=lf
