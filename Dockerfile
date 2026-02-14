@@ -8,7 +8,7 @@ ARG CONFIG=./config.json
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN groupadd --gid 10001 -r osm \
     && useradd --uid 10001 -d /home/osm -m -r -s /bin/false -g osm osm \
-    && mkdir -p /data/files/pdm /opt/pdm /opt/imposm3 \
+    && mkdir -p /data/files/pdm /opt/pdm /opt/imposm3 /tmp/pdm \
     && apt-get update \
     && apt-get -y install --no-install-recommends \
         apt-utils curl xsltproc osmctools ca-certificates gnupg \
@@ -40,6 +40,7 @@ COPY --chown=osm:osm ./website ./website
 COPY --chown=osm:osm ./projects ./projects
 
 RUN chmod +x ./docker-entrypoint.sh \
+    && chown -R osm:osm /tmp/pdm \
     && chown -R osm:osm /data/files/pdm \
     && chmod -R 755 /data/files/pdm
 
