@@ -127,7 +127,7 @@ Podoma allows whether daily update and complete rebuild of a terminated project 
 A project can be configured without end date, with `end_date: null`, to enable endless updates.
 
 ![Supported projects timelines](./projects_process.svg)
-- 1st case: An old project with an end date which completely fits in the OSH file availbility. It doesn't need updates but can be reinit on demand.
+- 1st case: An old project with an end date which completely fits in the OSH file availability. It doesn't need updates but can be reinit on demand.
 - 2nd case: An old project without end date, too old to be updated with diffs files and requires to be reinited to reach current date.
 - 3rd case: An old project without end date, recently updated and for which daily diffs update are applicable until current date.
 - 4th case: An old project with an end date in the future, on which daily diffs updates are applicable until current date.
@@ -145,13 +145,13 @@ Podoma makes use of Osmium and Imposm to filter necessary features according to 
 
 Perimeter filter must be selective enough to deal with reasonable amount of features. It must be wide enough to take care of several tagging practices in OSM community for the topic that matters. It is then recommended to focus on main tags here and use labels to get in details about classification, see below.
 
-Documented syntax of filters is available in [Osmium documentation online](https://docs.osmcode.org/osmium/latest/osmium-tags-filter.html). However, due to the need to apply those filters at severel steps of the processing, including outside of Osmium logic, filters that would use `!=` operator aren't currently supported.
+Documented syntax of filters is available in [Osmium documentation online](https://docs.osmcode.org/osmium/latest/osmium-tags-filter.html). However, due to the need to apply those filters at several steps of the processing, including outside of Osmium logic, filters that would use `!=` operator aren't currently supported.
 
 #### Labelling
-As to complete filtering functionnality, Podoma supports the assignment of labels to each version of features depending on their tags.  
+As to complete filtering functionality, Podoma supports the assignment of labels to each version of features depending on their tags.  
 Each version can be assigned with 0, 1 or more labels. Then each label can cover part or the whole project.
 
-Labels are then used in counts and KPI to distinguishe several population fo features inside the same project. It it then recommended to consider a wide project filter to include even imperfect features and not only the perfect ones and then separate them with labels. Consumers will then not only spot the population covered by the project but the ones that should be completed to be included in it as well. 
+Labels are then used in counts and KPI to distinguish several population fo features inside the same project. It it then recommended to consider a wide project filter to include even imperfect features and not only the perfect ones and then separate them with labels. Consumers will then not only spot the population covered by the project but the ones that should be completed to be included in it as well. 
 
 The syntax that is used to define labels conforms to [Postgresql's SQL/JSON](https://www.postgresql.org/docs/current/functions-json.html#FUNCTIONS-SQLJSON-PATH) which supports types. You can use the following example to define your own labels:
 
@@ -178,7 +178,7 @@ Then, the `update_projects` should be inited again to propagate the new labels i
 
 #### Missing members
 As explained upside, Podoma uses the daily diffs to keep projects updated. Those diffs files only contain modified features and even if a way or a relation may be included in it, none of their members will be mentioned is they hadn't been edited themselves.  
-It can finally causes issues when some unknown features in the database are rferenced by ways or relations.
+It can finally causes issues when some unknown features in the database are referenced by ways or relations.
 
 Podoma only keeps track of useful features for projects, it needs to check after each update if unknown features should be retrieved.  
 Overpass API is used by projects which require to get such missing members. A single query is sent to retrieve all nodes, ways, relations and their descendents to take care of recursivity. Thus a query covering 10 missing features can lead to a greater amount of results.
@@ -219,13 +219,13 @@ Some features may have a complex timeline, gaining and losing tags and validity 
 
 Dates on which features are counted are selected by the processing script following a precise logic. The span on which the script is used impacts the way those dates are selected. Starting from the current date, we keep the following:
 - Each day at midnight until last count update or 1st day of the current month
-- First day of each month until the last count update or begining of the project
+- First day of each month until the last count update or beginning of the project
 
 Running the count script each day will lead to 364 values at the end of a complete year.
 
 Project statistics are made by `./db/31_projects_update_tmp.sh` script. This script fills `pdm_feature_counts` SQL table with missing daily data according to last OSH file timestamp and current day.
 
-It is possible to force full recount for a project by deleting OSH timestamp file, retreive again PBF/PBH files and launch again the script:
+It is possible to force full recount for a project by deleting OSH timestamp file, retrieve again PBF/PBH files and launch again the script:
 
 ```bash
 rm ${WORK_DIR}/osh_timestamp
@@ -250,7 +250,7 @@ Following counts are done over a time frame between two dates of the timeline up
 - The actual surface contributed by the team, as the sum of surface delta of each version linked to each team member
 
 Figure upside tries to explain how two teams contributions are counted over a way edited 5 times by 3 différent mappers.  
-Currenty, contributions that removes feature out of a label can't be counted. As a result for each label, only positive contributions are part of the total.
+Currently, contributions that removes feature out of a label can't be counted. As a result for each label, only positive contributions are part of the total.
 
 #### Contributors counting
 
@@ -531,11 +531,11 @@ Icon select fields allow simple selecting of several similar attributes, for exa
 ## Build
 
 Once PDM has been properly configured, you should choose between Docker or standalone to build it.
-Refers to Database section in run chapter to make Podoma fully runable.
+Refers to Database section in run chapter to make Podoma fully runnable.
 
 ### git submodules
 
-Podoma relies on some git submodules. Please mind using the following to retreive them prior to build
+Podoma relies on some git submodules. Please mind using the following to retrieve them prior to build
 
 ```sh
 git submodule init
