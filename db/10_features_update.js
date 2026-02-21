@@ -152,6 +152,9 @@ mode="$1"
 if [[ -z "$mode" ]]; then
 	mode="update"
 fi
+
+psql -d ${process.env.DB_URL} -c 'SELECT COUNT(*) FROM pdm_compare_exclusions' # If an error is thrown here, the DB still needs to be initialized with the install script or directly with db/01_setup_schema.sql
+
 `;
 
 if (IMPOSM_ENABLED && CONFIG.hasOwnProperty("OSM_PBF_URL")){
