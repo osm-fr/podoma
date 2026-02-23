@@ -84,8 +84,8 @@ script.
 				blocks.appendChild(b);
 			};
 
-			if(res.added) { addBlock(numberFormat.format(res.added), "#{title.toLowerCase()} ajoutés"); }
-			if(res.count) { addBlock(numberFormat.format(res.count), "#{title.toLowerCase()} au total dans OSM"); }
+			if(res.added) { addBlock(numberFormat.format(res.added), "#{__('%s added', title.toLowerCase())}"); }
+			if(res.count) { addBlock(numberFormat.format(res.count), "#{__('%s total in OSM', title.toLowerCase())}"); }
 			if(res.tasksSolved !== undefined) { addBlock(numberFormat.format(res.tasksSolved), "#{statistics.osmose_tasks}"); }
 			addBlock(numberFormat.format(res.nbContributors), "#{__("contributors")}");
 
@@ -186,7 +186,7 @@ script.
 				if(#{isRecentPast || "false"}) {
 					const wordCloudDom = document.getElementById("word-cloud");
 					wordCloudDom.classList.remove("d-none");
-					wordCloud.unshift(["Merci !", 50]);
+					wordCloud.unshift(["#{__("Thank you!")}", 50]);
 					createWordCloud(wordCloudDom, wordCloud);
 				}
 			}
@@ -225,7 +225,7 @@ script.
 
 			// Notes count + chart
 			if(res.chartNotes) {
-				addBlock(numberFormat.format(res.openedNotes), `notes ouvertes (${res.statClosedNotes} résolues)`);
+				addBlock(numberFormat.format(res.openedNotes),`#{__("notes opened")} (${res.statClosedNotes} #{__("solved")})`);
 
 				const myChart = new Chart(document.getElementById("stats-chart-notes").getContext("2d"), {
 					type: "line",

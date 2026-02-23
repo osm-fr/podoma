@@ -519,14 +519,14 @@ app.get("/projects/:name/stats", (req, res) => {
             results.rows.length > 0
               ? [
                   {
-                    label: "Ouvertes",
+                    label: i18n.__("notes opened"),
                     data: results.rows.map((r) => ({ x: r.ts, y: r.open })),
                     fill: false,
                     borderColor: "#c62828",
                     lineTension: 0,
                   },
                   {
-                    label: "Résolues",
+                    label: i18n.__("closed"),
                     data: results.rows.map((r) => ({ x: r.ts, y: r.closed })),
                     fill: false,
                     borderColor: "#388E3C",
@@ -568,7 +568,7 @@ app.get("/projects/:name/stats", (req, res) => {
         .then((results) => ({
           chart: [
             {
-              label: "Nombre dans OSM",
+              label: i18n.__("Count in OSM"),
               data: results.rows.map((r) => ({ x: r.ts, y: r.amount })),
               fill: false,
               borderColor: "#388E3C",
@@ -677,7 +677,7 @@ app.get("/projects/:name/stats", (req, res) => {
             labels: d.map((r) => r.k),
             datasets: [
               {
-                label: "Nombre d'objets pour la clé",
+                label: i18n.__("Number of objects per key"),
                 data: d.map((r) => r.amount),
                 fill: false,
                 backgroundColor: "#1E88E5",

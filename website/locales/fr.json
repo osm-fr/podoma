@@ -101,6 +101,8 @@
 	"Closed": "Fermé",
 	"Re-opened": "Ré-ouvert",
 	"Commented": "Commenté",
+	"notes opened": "notes ouvertes",
+	"resolved": "résolues",
 	"You must be logged in to set the note as resolved.": "Vous devez être connecté pour marquer la note comme résolue.",
 	"💬 Comment": "💬 Commenter",
 	"Contribute to the discussion on this note": "Participer à la discussion sur cette note",
@@ -134,5 +136,10 @@
 	"participations": "participations",
 	"Currently: %s prioritary projects": "En ce moment : %s projets prioritaires",
 	"Currently: %s": "En ce moment : %s",
-	"Discuss": "Discuter"
+	"Discuss": "Discuter",
+	"Count in OSM": "Nombre dans OSM",
+	"Number of objects per key": "Nombre d'objets pour la clé",
+	"%s added": "%s ajoutés",
+	"%s total in OSM": "%s au total dans OSM",
+	"Thank you!": "Merci !"
 }
