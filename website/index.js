@@ -526,7 +526,7 @@ app.get("/projects/:name/stats", (req, res) => {
                     lineTension: 0,
                   },
                   {
-                    label: res.__("closed"),
+                    label: res.__("resolved"),
                     data: results.rows.map((r) => ({ x: r.ts, y: r.closed })),
                     fill: false,
                     borderColor: "#388E3C",

@@ -225,7 +225,7 @@ script.
 
 			// Notes count + chart
 			if(res.chartNotes) {
-				addBlock(numberFormat.format(res.openedNotes),`#{__("notes opened")} (${res.statClosedNotes} #{__("solved")})`);
+				addBlock(numberFormat.format(res.openedNotes),`#{__("notes opened")} (${res.statClosedNotes} #{__("resolved")})`);
 
 				const myChart = new Chart(document.getElementById("stats-chart-notes").getContext("2d"), {
 					type: "line",
