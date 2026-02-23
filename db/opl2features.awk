@@ -157,7 +157,7 @@ BEGIN {
     }
 
     # Construction de la sortie contributeurs
-    if (length(output_users) > 0){
+    if (length(output_users) > 0 && length(u) > 0){
         printf "%s,%s\n",
            u, w >> output_users
     }
