@@ -141,5 +141,7 @@
 	"Number of objects per key": "Number of objects per key",
 	"%s added": "%s added",
 	"%s total in OSM": "%s total in OSM",
-	"Thank you!": "Thank you!"
+	"Thank you!": "Thank you!",
+	"Thank you all!": "Thank you all!",
+	"Thanks to all the contributors for making this project a success. Without all of you, OpenStreetMap would be nothing!": "Thanks to all the contributors for making this project a success. Without all of you, OpenStreetMap would be nothing!"
 }
