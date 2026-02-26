@@ -158,4 +158,4 @@ block content
 									div.media-body.align-self-center
 										a.text-decoration-none(href=`/projects/${proj.name}`)
 											| #{proj.title}
-											span.text-muted.d-block= new Date(proj.month).toLocaleString('fr-FR', { month: 'long', year: 'numeric' })
+											span.text-muted.d-block= new Date(proj.month).toLocaleString(getLocale(), { month: 'long', year: 'numeric' })

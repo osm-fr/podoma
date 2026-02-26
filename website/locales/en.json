@@ -101,6 +101,8 @@
 	"Closed": "Closed",
 	"Re-opened": "Re-opened",
 	"Commented": "Commented",
+	"notes opened": "notes opened",
+	"resolved": "resolved",
 	"You must be logged in to set the note as resolved.": "You must be logged in to set the note as resolved.",
 	"💬 Comment": "💬 Comment",
 	"Contribute to the discussion on this note": "Contribute to the discussion on this note",
@@ -134,5 +136,12 @@
 	"participations": "participations",
 	"Currently: %s prioritary projects": "Currently: %s prioritary projects",
 	"Currently: %s": "Currently: %s",
-	"Discuss": "Discuss"
+	"Discuss": "Discuss",
+	"Count in OSM": "Count in OSM",
+	"Number of objects per key": "Number of objects per key",
+	"%s added": "%s added",
+	"%s total in OSM": "%s total in OSM",
+	"Thank you!": "Thank you!",
+	"Thank you all!": "Thank you all!",
+	"Thanks to all the contributors for making this project a success. Without all of you, OpenStreetMap would be nothing!": "Thanks to all the contributors for making this project a success. Without all of you, OpenStreetMap would be nothing!"
 }

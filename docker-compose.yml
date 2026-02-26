@@ -12,6 +12,11 @@ services:
     environment:
       - POSTGRES_DB=pdm
       - POSTGRES_PASSWORD=pgpassword
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 1s
+      retries: 5
       
   pdm:
     image: pdm/server:latest
@@ -43,10 +48,34 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres:pgpassword@pgsqldb:5432/pdm
 
+  pgadmin:
+    image: dpage/pgadmin4:9.12
+    restart: unless-stopped
+    profiles:
+      - pgadmin
+    depends_on:
+      - pgsqldb
+    networks:
+      - oim-internal
+    ports:
+      - "8000:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./db/pgadmin_init.json:/pgadmin4/servers.json
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "app@app.app"
+      PGADMIN_DEFAULT_PASSWORD: "app"
+    healthcheck:
+      test: ["CMD", "wget", "-O", "-", "http://localhost:80/misc/ping"]
+      interval: 20s
+      timeout: 1s
+      retries: 5
+
 volumes:
   db-data:
   pdm-data:
   workdir:
+  pgadmin-data:
 
 networks:
   oim-internal:
