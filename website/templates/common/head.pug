@@ -30,8 +30,9 @@ script(src="/lib/osm-request/osmrequest.js")
 
 include ../components/user_button
 
-//- Auth and Matomo handlers (runs on client)
 if CONFIG
+
+	//- Matomo Javascript API (runs on client) - https://developer.matomo.org/guides/tracking-javascript-guide
 	if CONFIG.MATOMO_HOST
 		script.
 			var _paq = window._paq = window._paq || [];
@@ -44,7 +45,18 @@ if CONFIG
 				var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
 				g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
 			})();
+	
+	//- Matomo Tag Manager (runs on client) - https://developer.matomo.org/guides/tagmanager/embedding
+	if CONFIG.MATOMO_TAG_MANAGER_URL
+		script.
+			var _mtm = window._mtm = window._mtm || [];
+			_mtm.push({'mtm.startTime': (new Date().getTime()), 'event': 'mtm.Start'});
+			(function() {
+				var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+				g.async=true; g.src="#{CONFIG.MATOMO_TAG_MANAGER_URL}"; s.parentNode.insertBefore(g,s);
+			})();
 
+	//- OSM Authentication (runs on client)
 	script.
 		const conf = {
 		  scope: "read_prefs write_api write_notes openid",

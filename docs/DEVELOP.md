@@ -65,6 +65,7 @@ The general configuration of the tool is to be filled in `config.json`. There is
 - `PANORAMAX_URL` : Panoramax instance to use (example `https://api.panoramax.xyz`)
 - `MATOMO_HOST`: URL to the Matomo host you want to report analytics to, with trailing /. Remove to disable. (example `https://stats.home.com/`). 
 - `MATOMO_SITE`: ID of the Matomo website you want to report analytics (example `6`)
+- `MATOMO_TAG_MANAGER_URL`: URL to the Matomo Tag Manager script, typically in the format https://<DOMAIN>/js/container_<ID>.js (either use this or MATOMO_HOST+MATOMO_SITE but not both)
 - `REPOSITORY_URL`: URL of the software repository (example `https://github.com/osm-fr/podoma`)
 - `VECT_STYLE` : URL to [Maplibre GL compatible style](https://maplibre.org/maplibre-gl-js/docs/) (example `https://tile-vect.openstreetmap.fr/styles/liberty/style.json`)
 - `PDM_TILES_URL`: URL to access the _pg_tileserv_ service, which provides the layers in your database
