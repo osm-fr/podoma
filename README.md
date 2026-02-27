@@ -47,6 +47,7 @@ Podoma powers several OSM-related initiatives across the community:
 * 🇫🇷 [ProjetDuMois](https://projetdumois.fr/) — Monthly community mapping projects (France)
 * ⚡ [Enedis OSM-FR](https://enedis.openstreetmap.fr) — Power grid mapping statistics (France)
 * 🌐 [MapYourGrid](https://dianethy.shinyapps.io/Progress_MapYourGrid/) — Global power grid mapping progress
+* 🇮🇹 [Progetto del mese](https://osmit-podoma.wmcloud.org/) — Monthly community mapping projects (Italy)
 
 ## 📬 Contact
 
