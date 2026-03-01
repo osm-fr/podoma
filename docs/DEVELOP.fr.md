@@ -53,6 +53,7 @@ La configuration générale de l'outil est à renseigner dans `config.json`. Un 
 - `OSM_PBF_URL`: URL du fichier OSM.PBF (etat courant de la base, exemple `https://download.geofabrik.de/europe/france-latest.osm.pbf`). Ce fichier n'est pas concerné par le processus d'autorisation.
 - `POLY_URL`: URL d'un fichier de polygone dans lequel les projets existent (exemple `https://download.geofabrik.de/europe/france.poly`) Ce fichier n'est pas concerné par le processus d'autorisation.
 - `DB_USE_IMPOSM_UPDATE` : Active ou désactive l'intégration d'imposm3 (permet d'utiliser une base existante et tenue à jour par d'autres moyens, par défaut `true`)
+- `USE_SOFT_DATES` : utiliser soft_start_date et soft_end_date (au lieu de start_date et end_date) pour déterminer si un projet est passé, en cours ou à venir
 - `WORK_DIR` : dossier de téléchargement et stockage temporaire (doit pouvoir contenir le fichier OSH PBF, exemple `/tmp/pdm`)
 - `OSM_URL` : instance OpenStreetMap à utiliser (exemple `https://www.openstreetmap.org`)
 - `OSM_API_URL` : instance API OpenStreetMap à utiliser (exemple `https://api.openstreetmap.org`)
@@ -98,8 +99,9 @@ Les propriétés dans `info.json` sont les suivantes :
 - `name` : identifiant de la mission (caractères autorisés : A-Z, 0-9, \_ et -)
 - `title` : nom de la mission (assez court)
 - `start_date` : date de début de la mission (format AAAA-MM-JJ)
-- `end_date` : date de fin de la mission (format AAAA-MM-JJ)
+- `soft_start_date`: date de début de la période de _forte_ animation communautaire (format AAAA-MM-JJ). Donnée purement à titre informatif, n'affecte pas le traitement des données.
 - `soft_end_date`: date de fin de la période de _forte_ animation communautaire (format AAAA-MM-JJ). Donnée purement à titre informatif, n'affecte pas le traitement des données.
+- `end_date` : date de fin de la mission (format AAAA-MM-JJ)
 - `summary` : résumé de la mission
 - `links` : définition des URL pour les liens vers des pages tierces (wiki OSM, forum OSM ou page de blog) avec ce format "osmwiki|osmblog|osmforum": "projetdumois.fr"
 - `database.osmium_tag_filter` : filtre Osmium sur les tags à appliquer pour ne conserver que les objets OSM pertinents (par exemple `nwr/*:covid19`, [syntaxe décrite ici](https://osmcode.org/osmium-tool/manual.html#filtering-by-tags)). Il est possible d'enchaîner plusieurs filtres par & et en répétant l'indication de primitive à chaque niveau. L'opérateur != n'est pour l'instant pas pris en compte.
