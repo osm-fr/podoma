@@ -25,6 +25,7 @@
   "VECT_STYLE": "https://tile-vect.openstreetmap.fr/styles/liberty/style.json",
   "PDM_TILES_URL": "http://localhost:7800",
   "DB_USE_IMPOSM_UPDATE": true,
+  "USE_SOFT_DATES": false,
   "WORK_DIR": "/tmp/pdm",
   "GEOJSON_BOUNDS": {
     "type": "Polygon",
