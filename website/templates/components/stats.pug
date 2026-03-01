@@ -223,6 +223,23 @@ script.
 
 			const dateFmt = #{isActive || isNext || isRecentPast || "false"} ? "DD/MM" : "MM/YYYY";
 
+			const softStartDate = "#{soft_start_date || ''}";
+			const softEndDate = "#{soft_end_date || ''}";
+			const annotationOpts = (softStartDate && softEndDate) ? {
+				annotation: {
+					annotations: {
+						softRange: {
+							type: "box",
+							xMin: softStartDate,
+							xMax: softEndDate,
+							backgroundColor: "rgba(33, 150, 243, 0.1)",
+							borderColor: "rgba(33, 150, 243, 0.3)",
+							borderWidth: 1
+						}
+					}
+				}
+			} : {};
+
 			// Notes count + chart
 			if(res.chartNotes) {
 				addBlock(numberFormat.format(res.openedNotes),`#{__("notes opened")} (${res.statClosedNotes} #{__("resolved")})`);
@@ -234,6 +251,7 @@ script.
 					},
 					options: {
 						responsive: true,
+						plugins: annotationOpts,
 						scales: {
 							x: {
 								type: 'time',
@@ -263,6 +281,7 @@ script.
 				},
 				options: {
 					responsive: true,
+					plugins: annotationOpts,
 					scales: {
 						x: {
 							type: 'time',

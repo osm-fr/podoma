@@ -1083,6 +1083,9 @@ const authorized = {
   "chartjs-adapter-moment": {
     "chartjs-adapter-moment.js": "dist/chartjs-adapter-moment.min.js",
   },
+  "chartjs-plugin-annotation": {
+    "annotation.js": "dist/chartjs-plugin-annotation.min.js",
+  },
   "maplibre-gl": {
     "maplibre-gl.js": "dist/maplibre-gl.js",
     "maplibre-gl.css": "dist/maplibre-gl.css",
