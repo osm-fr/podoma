@@ -261,7 +261,9 @@ Object.values(projects).forEach(project => {
 if (projectLength > 0){
     projectsQry = `${projectsQry.substring(0, projectsQry.length-1)} ON CONFLICT (project_id) DO UPDATE SET start_date=EXCLUDED.start_date, end_date=EXCLUDED.end_date`;
     pgPool.query(projectsQry, (err, res) => {
-        if (err){
+        if(err?.message?.includes("cannot affect row a second time")) {
+            throw new Error(`Error when installing projects: ${err}\n\nMake sure all projects have a distinct id, query was: ${projectsQry}`);
+        } else if (err) {
             throw new Error(`Error when installing projects: ${err}`);
         }
         console.log(projectLength+" project(s) installed");
@@ -474,7 +476,7 @@ Object.values(projects).forEach(project => {
         script += `
         echo "   => [\$((\$(date -d now +%s) - \$process_start_t0))s] Seek for all changes related to selected features and convert to OPL"
         rm -f "${oplProject}"
-        osmium getid ${getIdOptions} "\$history_osh" -I "${oshProjectTags}" -f opl,history=true -o "${oplProject}"
+        osmium getid ${getIdOptions} "\$history_osh" -I "${oshProjectTags}" -f opl,history=true -o "${oplProject}" || { echo "osmium getid failed, check ${oshProjectTags}"; exit 1; }
         rm -f "${csvFeatures}" "${csvMembers}" "${oshProjectTags}"
 
         ${macroChangesCsv ("init", project, oplProject, csvFeatures, csvUsers, csvMembers, "\$process_start_ts", "\$process_end_tss")}
