@@ -683,7 +683,7 @@ app.get("/projects/:name/stats", (req, res) => {
       results.forEach((r) => {
         if (r != null && r.status === "fulfilled") {
           Object.entries(r.value).forEach((e) => {
-            if (!toSend[e[0]] && !isNaN(e[1])) {
+            if (!toSend[e[0]]) {
               toSend[e[0]] = e[1];
             }
           });
