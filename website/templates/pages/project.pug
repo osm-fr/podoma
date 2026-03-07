@@ -78,7 +78,7 @@ block content
 				i.fa.fa-question-circle.mr-2(style="font-size: 2.1rem")
 				| #{__("How to contribute")}
 			if isNext
-				p= __("This project will start on %s, but it's never too soon to start! You can already improve data using our tools or improve the documentation.", new Date(start_date).toLocaleString(getLocale(), { day: "numeric", month: "long" }))
+				p= __("This project will start on %s, but it's never too soon to start! You can already improve data using our tools or improve the documentation.", new Date(CONFIG.USE_SOFT_DATES ? soft_start_date : start_date).toLocaleString(getLocale(), { day: "numeric", month: "long" }))
 			else if !isActive
 				if isHardEnded
 					p= __("This project is done, but mapping in OpenStreetMap never ends! You can contribute on other topics.")
@@ -118,7 +118,7 @@ block content
 				| #{__("Statistics")}
 
 			if isNext
-				p= __("Progress statistics will be shown at project start on %s.", new Date(start_date).toLocaleString(getLocale(), { day: "numeric", month: "long" }))
+				p= __("Progress statistics will be shown at project start on %s.", new Date(CONFIG.USE_SOFT_DATES ? soft_start_date : start_date).toLocaleString(getLocale(), { day: "numeric", month: "long" }))
 			else
 				include ../components/stats.pug
 

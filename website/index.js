@@ -433,9 +433,10 @@ app.get("/projects/:name/stats", (req, res) => {
   const osmUserAuthentified =
     typeof req.query.osm_user === "string" &&
     req.query.osm_user.trim().length > 0;
+  const start_date = CONFIG.USE_SOFT_DATES ? p.soft_start_date : p.start_date;
   const daysToKeep = (day) => {
     if (
-      Date.now() - new Date(p.start_date).getTime() <
+      Date.now() - new Date(start_date).getTime() <
       1000 * 60 * 60 * 24 * 60
     ) {
       return true;
@@ -455,7 +456,7 @@ app.get("/projects/:name/stats", (req, res) => {
           const params = {
             item: ds.item,
             class: ds.class,
-            start_date: p.start_date,
+            start_date: start_date,
             country: ds.country,
           };
           return fetch(
@@ -566,19 +567,7 @@ app.get("/projects/:name/stats", (req, res) => {
         [p.id]
         )
         .then((results) => ({
-          chart: [
-            {
-              label: res.__("Count in OSM"),
-              data: results.rows.map((r) => ({ x: r.ts, y: r.amount })),
-              fill: false,
-              borderColor: "#388E3C",
-              lineTension: 0,
-            },
-          ],
-          added:
-            results.rows.length > 0 &&
-            results.rows[results.rows.length - 1].amount -
-              results.rows[0].amount,
+          osm_counts: results.rows
         })),
     );
 
@@ -696,8 +685,6 @@ app.get("/projects/:name/stats", (req, res) => {
           Object.entries(r.value).forEach((e) => {
             if (!toSend[e[0]]) {
               toSend[e[0]] = e[1];
-            } else if (e[0] === "chart") {
-              toSend.chart = toSend.chart.concat(e[1]);
             }
           });
         }else if (r != null && r.status === "rejected"){
@@ -1082,6 +1069,9 @@ const authorized = {
   },
   "chartjs-adapter-moment": {
     "chartjs-adapter-moment.js": "dist/chartjs-adapter-moment.min.js",
+  },
+  "chartjs-plugin-annotation": {
+    "annotation.js": "dist/chartjs-plugin-annotation.min.js",
   },
   "maplibre-gl": {
     "maplibre-gl.js": "dist/maplibre-gl.js",

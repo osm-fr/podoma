@@ -53,6 +53,7 @@ The general configuration of the tool is to be filled in `config.json`. There is
 - `OSM_PBF_URL`: URL of the OSM.PBF file (current state, example `https://download.geofabrik.de/europe/france-latest.osm.pbf`). This file isn't covered by authorization process.
 - `POLY_URL`: URL of a polygon file holding the perimeter in which projects are considered (example `https://download.geofabrik.de/europe/france.poly`). This file isn't covered by authorization process.
 - `DB_USE_IMPOSM_UPDATE` : enable or disabled Imposm3 integration (to use an existing database which would be maintained by other means, by default `true`)
+- `USE_SOFT_DATES`: whether to use soft_start_date and soft_end_date (instead of start_date and end_date) to decide whether a projects is past, current or next
 - `WORK_DIR`: download and temporary storage folder (must have capacity to store the OSH PBF file, example `/tmp/pdm`)
 - `OSM_URL`: OpenStreetMap instance to use (example `https://www.openstreetmap.org`)
 - `OSM_API_URL` : API OpenStreetMap instance to use (example `https://www.api.openstreetmap.org`)
@@ -98,8 +99,9 @@ The properties in `info.json` are as follows:
 - `name`: mission identifier (authorized characters: A-Z, 0-9, \_ and -)
 - `title`: name of the mission (short enough)
 - `start_date`: start date of the mission (format YYYYY-MM-DD)
-- `end_date`: end date of the mission (format YYYYY-MM-DD)
+- `soft_start_date`: start date of the _strong_ community animation period (format YYYYY-MM-DD). This is only informational, it doesn't affect backend processing.
 - `soft_end_date`: end date of the _strong_ community animation period (format YYYYY-MM-DD). This is only informational, it doesn't affect backend processing.
+- `end_date`: end date of the mission (format YYYYY-MM-DD)
 - `summary`: summary of the mission
 - `links`: definition of the URLs for links to third party pages (OSM wiki, OSM forum or blog page) with this format "osmwiki|osmblog|osmforum": "projetdumois.fr"
 - `database.osmium_tag_filter` : Osmium filter on the tags to be applied to keep only the relevant OSM objects (for example `nwr/*:covid19`, [syntax described here](https://osmcode.org/osmium-tool/manual.html#filtering-by-tags)). It is possible to list many filters using `&` character and same syntax.

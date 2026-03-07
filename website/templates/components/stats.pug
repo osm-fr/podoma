@@ -57,8 +57,10 @@ script.
 		.then(res => res.json())
 		.then(res => {
 			// Last stats update time
-			const lastUpdate = document.getElementById("stats-update");
-			lastUpdate.innerHTML = "#{__("Last update: ")}" + (new Date(res.lastUpdate)).toLocaleDateString();
+			if(res.lastUpdate) {
+				const lastUpdate = document.getElementById("stats-update");
+				lastUpdate.innerHTML = "#{__('Last update: ')}" + (new Date(res.lastUpdate)).toLocaleDateString();
+			}
 
 			// Blocks for small stats
 			const blocks = document.getElementById("stats-blocks");
@@ -84,10 +86,25 @@ script.
 				blocks.appendChild(b);
 			};
 
-			if(res.added) { addBlock(numberFormat.format(res.added), "#{__('%s added', title.toLowerCase())}"); }
+			const softStartDate = "#{soft_start_date || ''}",
+				softEndDate = "#{soft_end_date || ''}",
+				softStartDateObj = new Date(softStartDate),
+				softEndDateObj = new Date(softEndDate),
+				useSoftDates = "#{CONFIG.USE_SOFT_DATES || ''}" === "true"  && !!softStartDate && !!softEndDate;
+
+			if (res.osm_counts?.length > 1) {
+				const startIndex = useSoftDates ? res.osm_counts.findIndex(x => new Date(x.ts) >= softStartDateObj) : -1,
+					endIndex = useSoftDates ? res.osm_counts.findIndex(x => new Date(x.ts) >= softEndDateObj) : -1,
+					startItem = res.osm_counts[Math.max(0, startIndex)],
+					endItem = res.osm_counts[endIndex >= 0 ? endIndex : res.osm_counts.length - 1],
+					addedNumber = numberFormat.format(endItem.amount - startItem.amount);
+				let addedText = "#{__('%s added', title.toLowerCase())}";
+				if(useSoftDates) addedText += ` (${new Intl.DateTimeFormat().formatRange(new Date(startItem.ts), new Date(endItem.ts))})`;
+				addBlock(addedNumber, addedText);
+			}
 			if(res.count) { addBlock(numberFormat.format(res.count), "#{__('%s total in OSM', title.toLowerCase())}"); }
 			if(res.tasksSolved !== undefined) { addBlock(numberFormat.format(res.tasksSolved), "#{statistics.osmose_tasks}"); }
-			addBlock(numberFormat.format(res.nbContributors), "#{__("contributors")}");
+			if(res.nbContributors) addBlock(numberFormat.format(res.nbContributors), "#{__('contributors')}");
 
 			// Leaderboard
 			if(res.leaderboard && res.leaderboard.length > 0) {
@@ -223,6 +240,21 @@ script.
 
 			const dateFmt = #{isActive || isNext || isRecentPast || "false"} ? "DD/MM" : "MM/YYYY";
 
+			const annotationOpts = (softStartDate && softEndDate) ? {
+				annotation: {
+					annotations: {
+						softRange: {
+							type: "box",
+							xMin: softStartDate,
+							xMax: softEndDate,
+							backgroundColor: "rgba(33, 150, 243, 0.1)",
+							borderColor: "rgba(33, 150, 243, 0.3)",
+							borderWidth: 1
+						}
+					}
+				}
+			} : {};
+
 			// Notes count + chart
 			if(res.chartNotes) {
 				addBlock(numberFormat.format(res.openedNotes),`#{__("notes opened")} (${res.statClosedNotes} #{__("resolved")})`);
@@ -234,6 +266,7 @@ script.
 					},
 					options: {
 						responsive: true,
+						plugins: annotationOpts,
 						scales: {
 							x: {
 								type: 'time',
@@ -255,29 +288,40 @@ script.
 			}
 
 			// Evolution chart
-			const ctx = document.getElementById("stats-chart").getContext("2d");
-			const myChart = new Chart(ctx, {
-				type: "line",
-				data: {
-					datasets: res.chart
-				},
-				options: {
-					responsive: true,
-					scales: {
-						x: {
-							type: 'time',
-							bounds: 'ticks',
-							time: {
-								tooltipFormat: "DD/MM/YYYY",
-								displayFormats: { day: dateFmt },
-								round: "day",
-								unit: "day"
-							}
-						},
-						y: res.pctTasksDone === undefined || parseInt(res.pctTasksDone) >= 30 ? yAxeLinear : yAxeLogarithmic
+			if(res.osm_counts?.length) {
+				const ctx = document.getElementById("stats-chart").getContext("2d");
+				const myChart = new Chart(ctx, {
+					type: "line",
+					data: {
+						datasets: [
+							{
+							label: "#{__('Count in OSM')}",
+							data: res.osm_counts.map((r) => ({ x: r.ts, y: r.amount })),
+							fill: false,
+							borderColor: "#388E3C",
+							lineTension: 0,
+							},
+						]
+					},
+					options: {
+						responsive: true,
+						plugins: annotationOpts,
+						scales: {
+							x: {
+								type: 'time',
+								bounds: 'ticks',
+								time: {
+									tooltipFormat: "DD/MM/YYYY",
+									displayFormats: { day: dateFmt },
+									round: "day",
+									unit: "day"
+								}
+							},
+							y: res.pctTasksDone === undefined || parseInt(res.pctTasksDone) >= 30 ? yAxeLinear : yAxeLogarithmic
+						}
 					}
-				}
-			});
+				});
+			}
 
 			// Keys chart
 			if(res.chartKeys) {
