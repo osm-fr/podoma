@@ -65,7 +65,7 @@ script.
 			// Blocks for small stats
 			const blocks = document.getElementById("stats-blocks");
 			blocks.innerHTML = '';
-			const addBlock = (title, subtitle) => {
+			const addBlock = (title, subtitle, text) => {
 				const b = document.createElement("div");
 				b.classList.add("col-md-4", "mb-2");
 
@@ -73,38 +73,63 @@ script.
 				sb.classList.add("p-4", "no-gutters", "border", "rounded", "overflow-hidden", "flex-md-row", "shadow-sm", "position-relative", "h-100");
 				b.appendChild(sb);
 
-				const t = document.createElement("h3");
-				t.classList.add("mb-0");
-				t.appendChild(document.createTextNode(title));
-				sb.appendChild(t);
+				const ti = document.createElement("h3");
+				ti.classList.add("mb-0");
+				ti.appendChild(document.createTextNode(title));
+				sb.appendChild(ti);
 
 				const st = document.createElement("p");
 				st.classList.add("card-text", "mb-auto");
 				st.appendChild(document.createTextNode(subtitle));
 				sb.appendChild(st);
 
+				if(text){
+					const te = document.createElement("p");
+					te.classList.add("card-text", "mb-auto");
+					te.appendChild(document.createTextNode(text));
+					sb.appendChild(te);
+				}
+
 				blocks.appendChild(b);
 			};
 
-			const softStartDate = "#{soft_start_date || ''}",
+			const startDate = "#{start_date}",
+				softStartDate = "#{soft_start_date || ''}",
 				softEndDate = "#{soft_end_date || ''}",
+				endDate = "#{end_date || ''}",
+				startDateObj = new Date(startDate),
 				softStartDateObj = new Date(softStartDate),
 				softEndDateObj = new Date(softEndDate),
-				useSoftDates = "#{CONFIG.USE_SOFT_DATES || ''}" === "true"  && !!softStartDate && !!softEndDate;
+				endDateObj = new Date(endDate),
+				addedSubtitle = "#{__('%s added', title.toLowerCase())}",
+				useSoftDates = "#{CONFIG.USE_SOFT_DATES || ''}" === "true"  && !isNaN(softStartDateObj) && !isNaN(softEndDateObj);
 
 			if (res.osm_counts?.length > 1) {
-				const startIndex = useSoftDates ? res.osm_counts.findIndex(x => new Date(x.ts) >= softStartDateObj) : -1,
-					endIndex = useSoftDates ? res.osm_counts.findIndex(x => new Date(x.ts) >= softEndDateObj) : -1,
-					startItem = res.osm_counts[Math.max(0, startIndex)],
-					endItem = res.osm_counts[endIndex >= 0 ? endIndex : res.osm_counts.length - 1],
-					addedNumber = numberFormat.format(endItem.amount - startItem.amount);
-				let addedText = "#{__('%s added', title.toLowerCase())}";
-				if(useSoftDates) addedText += ` (${new Intl.DateTimeFormat().formatRange(new Date(startItem.ts), new Date(endItem.ts))})`;
-				addBlock(addedNumber, addedText);
+				if(useSoftDates) {
+					const startIndex = res.osm_counts.findIndex(x => new Date(x.ts) >= softStartDateObj),
+						endIndex = res.osm_counts.findIndex(x => new Date(x.ts) >= softEndDateObj),
+						softStartItem = res.osm_counts[Math.max(0, startIndex)],
+						softEndItem = res.osm_counts[endIndex >= 0 ? endIndex : res.osm_counts.length - 1],
+						addedTitle = numberFormat.format(softEndItem.amount - softStartItem.amount),
+						addedText = `(${new Intl.DateTimeFormat().formatRange(new Date(softStartItem.ts), new Date(softEndItem.ts))})`;
+					addBlock(addedTitle, addedSubtitle, addedText);
+				}
+
+				const startItem = res.osm_counts[0],
+					endItem = res.osm_counts[res.osm_counts.length - 1],
+					addedTitle = numberFormat.format(endItem.amount - startItem.amount),
+					addedText = `(${new Intl.DateTimeFormat().formatRange(new Date(startItem.ts), new Date(endItem.ts))})`;
+				addBlock(addedTitle, addedSubtitle, addedText);
 			}
 			if(res.count) { addBlock(numberFormat.format(res.count), "#{__('%s total in OSM', title.toLowerCase())}"); }
 			if(res.tasksSolved !== undefined) { addBlock(numberFormat.format(res.tasksSolved), "#{statistics.osmose_tasks}"); }
-			if(res.nbContributors) addBlock(numberFormat.format(res.nbContributors), "#{__('contributors')}");
+			if(res.nbContributors) {
+				addBlock(
+					numberFormat.format(res.nbContributors),
+					"#{__('contributors')}",
+					useSoftDates && `(${new Intl.DateTimeFormat().formatRange(startDateObj, endDateObj < new Date() ? endDateObj : new Date())})`
+				);
+			}
 
 			// Leaderboard
 			if(res.leaderboard && res.leaderboard.length > 0) {

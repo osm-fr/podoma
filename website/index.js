@@ -433,10 +433,10 @@ app.get("/projects/:name/stats", (req, res) => {
   const osmUserAuthentified =
     typeof req.query.osm_user === "string" &&
     req.query.osm_user.trim().length > 0;
-  const start_date = CONFIG.USE_SOFT_DATES ? p.soft_start_date : p.start_date;
+  const startDate = CONFIG.USE_SOFT_DATES ? p.soft_start_date : p.start_date;
   const daysToKeep = (day) => {
     if (
-      Date.now() - new Date(start_date).getTime() <
+      Date.now() - new Date(startDate).getTime() <
       1000 * 60 * 60 * 24 * 60
     ) {
       return true;
@@ -456,7 +456,7 @@ app.get("/projects/:name/stats", (req, res) => {
           const params = {
             item: ds.item,
             class: ds.class,
-            start_date: start_date,
+            start_date: startDate,
             country: ds.country,
           };
           return fetch(
