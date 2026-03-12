@@ -103,6 +103,7 @@ script.
 				endDateObj = new Date(endDate),
 				addedSubtitle = "#{__('%s added', title.toLowerCase())}",
 				useSoftDates = "#{CONFIG.USE_SOFT_DATES || ''}" === "true"  && !isNaN(softStartDateObj) && !isNaN(softEndDateObj);
+			let addedDateRange = null;
 
 			if (res.osm_counts?.length > 1) {
 				if(useSoftDates) {
@@ -111,25 +112,19 @@ script.
 						softStartItem = res.osm_counts[Math.max(0, startIndex)],
 						softEndItem = res.osm_counts[endIndex >= 0 ? endIndex : res.osm_counts.length - 1],
 						addedTitle = numberFormat.format(softEndItem.amount - softStartItem.amount),
-						addedText = `(${new Intl.DateTimeFormat().formatRange(new Date(softStartItem.ts), new Date(softEndItem.ts))})`;
-					addBlock(addedTitle, addedSubtitle, addedText);
+						softDateRange = `(${new Intl.DateTimeFormat().formatRange(new Date(softStartItem.ts), new Date(softEndItem.ts))})`;
+					addBlock(addedTitle, addedSubtitle, softDateRange);
 				}
 
 				const startItem = res.osm_counts[0],
 					endItem = res.osm_counts[res.osm_counts.length - 1],
-					addedTitle = numberFormat.format(endItem.amount - startItem.amount),
-					addedText = `(${new Intl.DateTimeFormat().formatRange(new Date(startItem.ts), new Date(endItem.ts))})`;
-				addBlock(addedTitle, addedSubtitle, addedText);
+					addedTitle = numberFormat.format(endItem.amount - startItem.amount);
+				addedDateRange = useSoftDates && `(${new Intl.DateTimeFormat().formatRange(new Date(startItem.ts), new Date(endItem.ts))})`;
+				addBlock(addedTitle, addedSubtitle, addedDateRange);
 			}
+			if(res.nbContributors) { addBlock(numberFormat.format(res.nbContributors), "#{__('contributors')}", addedDateRange); } // We use addedDateRange here as well because it's more reliable than the project start/end dates, for example if they have been changed after data initialization
 			if(res.count) { addBlock(numberFormat.format(res.count), "#{__('%s total in OSM', title.toLowerCase())}"); }
 			if(res.tasksSolved !== undefined) { addBlock(numberFormat.format(res.tasksSolved), "#{statistics.osmose_tasks}"); }
-			if(res.nbContributors) {
-				addBlock(
-					numberFormat.format(res.nbContributors),
-					"#{__('contributors')}",
-					useSoftDates && `(${new Intl.DateTimeFormat().formatRange(startDateObj, endDateObj < new Date() ? endDateObj : new Date())})`
-				);
-			}
 
 			// Leaderboard
 			if(res.leaderboard && res.leaderboard.length > 0) {
