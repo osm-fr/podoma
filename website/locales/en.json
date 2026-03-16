@@ -11,7 +11,7 @@
 	"My badges": "My badges",
 	"All our projects": "All our projects",
 	"Find all projects, tools, statistics and data.": "Find all projects, tools, statistics and data.",
-	"Copyright 2024-2025 Podoma - Released under AGPL 3.0 license": "Copyright 2024-2025 Podoma - Released under AGPL 3.0 license",
+	"Copyright Podoma - Released under AGPL 3.0 license": "Copyright 2024–2026 Podoma - Released under AGPL 3.0 license",
 	"Supported by": "Supported by",
 	"Adheres to": "Adheres to",
 	"Principles for digital development": "Principles for digital development",
@@ -39,7 +39,7 @@
 	"City": "City",
 	"Find all data directly on OpenStreetMap website.": "Find all data directly on OpenStreetMap website.",
 	"Other projects": "Other projects",
-	"Find other projects of the month, their tools, statistics and data.": "Find other projects of the month, their tools, statistics and data.",
+	"Find other projects, their tools, statistics and data.": "Find other projects, their tools, statistics and data.",
 	"Previous": "Previous",
 	"Next": "Next",
 	"Go back to homepage": "Go back to homepage",
@@ -143,5 +143,10 @@
 	"%s total in OSM": "%s total in OSM",
 	"Thank you!": "Thank you!",
 	"Thank you all!": "Thank you all!",
-	"Thanks to all the contributors for making this project a success. Without all of you, OpenStreetMap would be nothing!": "Thanks to all the contributors for making this project a success. Without all of you, OpenStreetMap would be nothing!"
+	"Thanks to all the contributors for making this project a success. Without all of you, OpenStreetMap would be nothing!": "Thanks to all the contributors for making this project a success. Without all of you, OpenStreetMap would be nothing!",
+	"General": "General",
+	"Participated": "Participated",
+	"They have participated to the project": "They have participated to the project",
+	"Always present": "Always present",
+	"They have participated to all the projects": "They have participated to all the projects"
 }
