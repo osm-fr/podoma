@@ -173,7 +173,7 @@ BEGIN
 		-- 1st, 2nd and 3rd position
 		IF result_position <= 3 THEN
 			id := CASE WHEN result_position = 1 THEN 'score_1st' WHEN result_position = 2 THEN 'score_2nd' ELSE 'score_3rd' END;
-			name := CASE WHEN result_position = 1 THEN '1ère place' WHEN result_position = 2 THEN '2ème place' ELSE '3ème place' END;
+			name := CASE WHEN result_position = 1 THEN '1st place' WHEN result_position = 2 THEN '2nd place' ELSE '3rd place' END;
 			description := 'Vous êtes sur le podium, félicitations !';
 			acquired := true;
 			progress := 100;
@@ -181,7 +181,7 @@ BEGIN
 		-- Near podium
 		ELSIF result_position <= 10 THEN
 			id := 'score_3rd';
-			name := 'Près du podium';
+			name := 'Near the podium';
 			description := 'Vous n''êtes qu''à quelques points d''être sur le podium !';
 			acquired := false;
 			progress := FLOOR((result_position - 3)::float / 7 * 100);
