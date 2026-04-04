@@ -308,8 +308,8 @@ script.
 					container: 'map-stats',
 					pitchWithRotate: false,
 					dragRotate: false,
-					center: [2.5, 46.0],
-					zoom: 3,
+					center: [#{CONFIG.MAP_INITIAL_LON || 2.5}, #{CONFIG.MAP_INITIAL_LAT || 46.0}],
+					zoom: #{CONFIG.MAP_INITIAL_ZOOM || 3},
 					style: res.mapStyle.style,
 					minZoom: 1,
 					maxZoom: 10
