@@ -68,6 +68,9 @@ La configuration générale de l'outil est à renseigner dans `config.json`. Un 
 - `MATOMO_TAG_MANAGER_URL`: URL vers le script Matomo Tag Manager, généralement au format https://<DOMAINE>/js/container_<ID>.js (utilisez soit ce paramètre, soit MATOMO_HOST+MATOMO_SITE, mais pas les deux)
 - `REPOSITORY_URL` : URL du dépôt du logiciel (exemple `https://github.com/osm-fr/podoma`)
 - `VECT_STYLE` : URL d'un [style compatible avec Maplibre GL](https://maplibre.org/maplibre-gl-js/docs/) (exemple `https://tile-vect.openstreetmap.fr/styles/liberty/style.json`)
+- `MAP_INITIAL_ZOOM` : Niveau de zoom initial de la carte
+- `MAP_INITIAL_LAT` : Latitude du centre initial de la carte
+- `MAP_INITIAL_LON` : Longitude du centre initial de la carte
 - `PDM_TILES_URL` : URL d'accès au service _pg_tileserv_, qui met à disposition les couches dans votre base de données
 - `GEOJSON_BOUNDS` : objet de type `Geometry` (polygone ou multipolygone) en GeoJSON délimitant la zone où rechercher des notes OSM
 - `MAINTENANCE_MODE`: option pour afficher une page spéciale sur le site indiquant qu'il est en cours de maintenance (valeur `true` pour activer)
