@@ -459,12 +459,12 @@ exports.getMapStatsStyle = (p, maxPerLevel) => {
 
 // Get badges description
 exports.getBadgesDetails = (projects, badgesRows) => {
-	const badges = { "meta": { project: { name: res.__("General"), image: "/images/favicon.svg" }, badges: [] } };
+	const badges = { "meta": { project: { name: "General", image: "/images/favicon.svg" }, badges: [] } };
 	badgesRows.forEach(row => {
 		if(!badges[row.project]) {
 			badges[row.project] = {
 				project: { name: projects[row.project].title, date: projects[row.project].month, image: projects[row.project].icon },
-				badges: [{ id: row.project.split("_").pop(), name: res.__("Participated"), description: res.__("They have participated to the project"), acquired: true, progress: 100 }]
+				badges: [{ id: row.project.split("_").pop(), name: "Participated", description: "They have participated to the project", acquired: true, progress: 100 }]
 			};
 		}
 
@@ -475,7 +475,7 @@ exports.getBadgesDetails = (projects, badgesRows) => {
 
 	// Meta badges
 	if(Object.keys(badges).length - 1 === Object.keys(projects).length) {
-		badges.meta.badges.push({ id: "all", name: res.__("Always present"), description: res.__("They have participated to all the projects"), acquired: true, progress: 100 });
+		badges.meta.badges.push({ id: "all", name: "Always present", description: "They have participated to all the projects", acquired: true, progress: 100 });
 	}
 	if(badges.meta.badges.length === 0) {
 		delete badges.meta;

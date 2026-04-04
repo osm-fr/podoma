@@ -1041,6 +1041,7 @@ app.get("/users/:name", (req, res) => {
             });
           })
           .catch((e) => {
+            console.error("Error fetching badges:", e);
             res.redirect("/error/500");
           });
       } else {
@@ -1048,6 +1049,7 @@ app.get("/users/:name", (req, res) => {
       }
     })
     .catch((e) => {
+      console.error("Error fetching user ID:", e);
       res.redirect("/error/500");
     });
 });
