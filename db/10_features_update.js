@@ -45,6 +45,8 @@ const yamlData = {
 
 const preSQL = [
 	"DROP MATERIALIZED VIEW IF EXISTS pdm_boundary_tiles CASCADE",
+	"DROP MATERIALIZED VIEW IF EXISTS pdm_boundary_stats CASCADE",
+	"DROP MATERIALIZED VIEW IF EXISTS pdm_boundary_dash CASCADE",
 	"DROP MATERIALIZED VIEW IF EXISTS pdm_boundary_subdivide CASCADE"
 ]; // Suppression des ressources projets
 const postSQL = []; // Creation des ressources projets

@@ -58,6 +58,30 @@ CREATE TABLE pdm_counts_dates (
 );
 CREATE INDEX ON pdm_counts_dates using btree(project_id, ts);
 
+CREATE VIEW pdm_counts_dates_deltas AS (
+WITH ordered_delta AS (
+  SELECT
+    project_id,
+    ts,
+    ts - LEAD(ts) OVER (PARTITION BY project_id ORDER BY ts DESC) AS delta_last
+  FROM pdm_counts_dates
+),
+dates_sequeces AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (PARTITION BY project_id ORDER BY ts desc) - ROW_NUMBER() OVER (PARTITION BY project_id, delta_last ORDER BY ts desc) AS seq
+  FROM ordered_delta
+)
+SELECT
+  project_id,
+  max(ts) as ts,
+  delta_last as delta,
+  COUNT(ts) AS counter
+  FROM dates_sequeces
+  GROUP BY project_id, delta_last, seq
+  ORDER by ts
+);
+
 CREATE TABLE pdm_feature_counts(
 	project_id int NOT NULL,
 	ts TIMESTAMP NOT NULL,

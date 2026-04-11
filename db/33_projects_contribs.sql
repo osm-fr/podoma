@@ -26,12 +26,14 @@ UPDATE pdm_projects_teams SET userid=uknownusers.userid FROM uknownusers WHERE u
 
 -- Establishing user contributions in every running project
 WITH features as (
+    -- Retreiving changed features with their label and corresponding contributions
     SELECT d.ts::date, fc.osmid, fc.version, fc.userid, fc.contrib, fl.contrib as label_contrib, coalesce(fl.label,'no-label') as label, fc.geom_len, fc.geom_area, fc.geom_len_delta, fc.geom_area_delta
     FROM :changes_table fc
     JOIN pdm_mapper_counts_dates d ON fc.ts_start BETWEEN d.ts_past AND d.ts
     LEFT JOIN :labels_table fl ON fl.osmid=fc.osmid AND fl.version=fc.version
     WHERE fc.tagsfilter=true
 ), counts as (
+    -- Compute amounts, length and surface delta for each day, user, label and contribution
     SELECT 
       f.ts,
       f.userid,
@@ -48,6 +50,7 @@ WITH features as (
     GROUP BY f.ts, f.userid, f.contrib, f.label_contrib, ROLLUP(f.label)
     HAVING f.label != 'no-label' OR f.label IS NULL
 ), contributions as (
+    -- Conflate global and label contributions, amounts, length and surface deltas
     SELECT c.userid,
       c.ts,
       c.label,
@@ -71,6 +74,7 @@ WITH features as (
       end as geom_area_delta
     FROM counts c
 )
+-- Finally insert qualified contribution in the table
 INSERT INTO pdm_user_contribs(project_id, userid, ts, label, contribution, amount_delta, len_delta, area_delta, points)
     SELECT :project_id as project_id,
       cc.userid,
@@ -87,7 +91,8 @@ INSERT INTO pdm_user_contribs(project_id, userid, ts, label, contribution, amoun
       SUM(cc.geom_area_delta) AS area_delta,
       SUM(cc.nb * coalesce(pp.points,0)) AS points
     FROM contributions cc
-    LEFT JOIN pdm_projects_points pp ON cc.contrib=pp.contrib AND coalesce(cc.label,'global')=coalesce(pp.label,'global') AND pp.project_id=:project_id
+    LEFT JOIN pdm_projects_points pp ON cc.contrib=pp.contrib AND coalesce(cc.label,'_global')=coalesce(pp.label,'_global') AND pp.project_id=:project_id
+    WHERE cc.contrib IS NOT NULL
     GROUP BY project_id, cc.ts, cc.userid, cc.label, cc.contrib;
 
 -- Main labels count

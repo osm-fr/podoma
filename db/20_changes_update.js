@@ -334,7 +334,7 @@ fi
 
 if ${HAS_BOUNDARY}; then
     echo "   => Refresh boundary tiles"
-    ${PSQL} -c "REFRESH MATERIALIZED VIEW pdm_boundary_tiles"
+    ${PSQL} -c "REFRESH MATERIALIZED VIEW pdm_boundary_stats; REFRESH MATERIALIZED VIEW pdm_boundary_tiles; REFRESH MATERIALIZED VIEW pdm_boundary_dash"
 fi
 
 ${separator}
