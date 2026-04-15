@@ -596,18 +596,20 @@ app.get("/projects/:name/stats", (req, res) => {
       allPromises.push(
         pool
           .query(
-            `SELECT admin_level, max(nb) AS amount FROM pdm_boundary_tiles WHERE project_id = $1 AND label IS NULL GROUP BY admin_level`,[
+            `SELECT d.admin_level, d.delta_project_min, d.delta_project_max, d.delta_daily_min, d.delta_daily_max, b.name as boundary_max FROM pdm_boundary_dash d JOIN pdm_boundary b ON b.osm_id=d.boundary_max WHERE project_id = $1 AND label IS NULL`,[
              p.id
           ])
           .then((results) => {
-            const maxLevel = {};
+            const prjDeltaLevel = {};
+            const dailyDeltaLevel = {};
             results.rows.forEach((r) => {
-              if (!isNaN(parseInt(r.amount))) {
-                maxLevel[r.admin_level] = r.amount;
+              if (!isNaN(parseInt(r.delta_project_max))) {
+                prjDeltaLevel[r.admin_level] = {"min":r.delta_project_min, "max":r.delta_project_max, "boundary": r.boundary_max};
               }
+              dailyDeltaLevel[r.admin_level] = [r.delta_daily_min, r.delta_daily_max];
             });
-            return Object.keys(maxLevel).length > 0
-              ? getMapStatsStyle(p, maxLevel)
+            return Object.keys(prjDeltaLevel).length > 0
+              ? getMapStatsStyle(p, prjDeltaLevel, dailyDeltaLevel)
               : null;
           })
           .then((mapStyle) => ({ mapStyle })),

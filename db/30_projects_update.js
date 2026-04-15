@@ -198,13 +198,15 @@ process_start_ts=\${process_qry[0]}
 process_start_day=\$(date -d "\$process_start_ts" +%-d)
 process_start_month=\$(date -d "\$process_start_ts" +%-m)
 process_start_year=\$(date -d "\$process_start_ts" +%Y)
+process_start_time=$(date -d "\$process_start_ts" +%s --utc)
 process_end_ts=\${process_qry[1]}
-process_end_time=\$(date -d "\$process_end_ts" +%s)
+process_end_time=\$(date -d "\$process_end_ts" +%s --utc)
 process_end_day=\$(date -d "\$process_end_ts" +%-d)
 process_end_month=\$(date -d "\$process_end_ts" +%-m)
 process_end_year=\$(date -d "\$process_end_ts" +%Y)
 echo "== Statistics for project ${project.name}" between \$process_start_ts and \$process_end_ts
 process_start_t0=$(date -d now +%s)`;
+
     // Dénombrements
     if (project.statistics.count){
         script += `
@@ -213,13 +215,15 @@ if [[ \$process_start_ts == \$process_end_ts ]]; then
 else
     echo "   => [\$((\$(date -d now +%s) - \$process_start_t0))s] Counting features"
     count_dates_list=""
+    
     process_interm_time=\$(date -d "\${process_end_year}-\${process_end_month}-01T00:00:00Z" +%s --utc)
     if (( \$process_end_day <= 15 )); then
         process_interm_time=$((\$process_interm_time - 20*86400))
+        process_interm_time=$(($process_interm_time < $process_start_time ? $process_start_time : $process_interm_time))
     fi
     process_interm_year=\$(date -d "@\$process_interm_time" +%Y)
     process_interm_month=\$(date -d "@\$process_interm_time" +%-m)
-    if [[ "\$process_start_month" != "\$process_end_month" ]] || [[ "\$process_start_year" != "\$process_end_year" ]]; then
+    if (( (\$process_end_time - \$process_start_time) > (31*86400) )) && [[ "\$process_start_month" != "\$process_end_month" || "\$process_start_year" != "\$process_end_year" ]]; then
         for ((count_date_year=process_start_year; count_date_year<=process_interm_year; count_date_year++))
             do
             count_date_month=\$((count_date_year == process_start_year ? process_start_month : 1))
@@ -235,7 +239,7 @@ else
         process_interm_day=\$process_start_day
     fi
     process_interm_time=\$(date -d "\${process_interm_year}-\${process_interm_month}-\${process_interm_day}T00:00:00Z" +%s --utc)
-    for((count_date_offset=process_interm_time; count_date_offset<process_end_time; count_date_offset+=86400))
+    for ((count_date_offset=process_interm_time; count_date_offset<process_end_time; count_date_offset+=86400))
         do
         count_date_current=\$(date -d "@\$count_date_offset" +'%Y-%m-%dT00:00:00Z')
         count_dates_list="('\$count_date_current', '\$count_date_current'::timestamp - interval '1 day'),\$count_dates_list"
@@ -285,7 +289,8 @@ ${separator}
 script += `
 if ${HAS_BOUNDARY}; then
     echo "== Refresh boundary tiles"
-    ${PSQL} -c "REFRESH MATERIALIZED VIEW pdm_boundary_tiles"
+    ${PSQL} -c "REFRESH MATERIALIZED VIEW pdm_boundary_stats; REFRESH MATERIALIZED VIEW pdm_boundary_tiles; REFRESH MATERIALIZED VIEW pdm_boundary_dash"
+    echo " [\$((\$(date -d now +%s) - \$process_start_t0))s] done"
 fi
 ${separator}
 `;

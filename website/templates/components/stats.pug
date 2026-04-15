@@ -384,7 +384,13 @@ script.
 							}
 						});
 
-						div.appendChild(document.createTextNode(f.properties.name));
+						const titleSpan = document.createElement("span");
+						titleSpan.classList.add("font-weight-bold");
+						titleSpan.appendChild(document.createTextNode(f.properties.name));
+
+						div.appendChild(titleSpan);
+						div.appendChild(createDeltaElement(f.properties.delta_project, ` #{__("Total")} `, false));
+						div.appendChild(createDeltaElement(f.properties.delta_daily, ` 24h `, false));
 						div.appendChild(canvas);
 
 						popupHover.remove();
@@ -405,7 +411,15 @@ script.
 						}
 
 						const div = document.createElement("div");
-						div.appendChild(document.createTextNode(`${f.properties.name} : ${f.properties.nb}`));
+						const spanTitle = document.createElement("span");
+						spanTitle.appendChild(document.createTextNode(`${f.properties.name}`));
+						spanTitle.classList.add("font-weight-bold")
+						const spanFull = document.createElement("span");
+						spanFull.appendChild(document.createTextNode(`${f.properties.delta_project}`));
+						div.appendChild(spanTitle);
+						div.appendChild(document.createElement("br"));
+						div.appendChild(spanFull);
+						div.appendChild(createDeltaElement(f.properties.delta_daily, null, true));
 						popupHover.setLngLat(coords).setDOMContent(div).addTo(mapStats);
 					}
 				});
@@ -421,9 +435,10 @@ script.
 				const admLvlToText = { "2": "#{__("Country")}", "4": "#{__("Region")}", "6": "#{__("Department")}", "8": "#{__("City")}" };
 				Object.entries(res.mapStyle.legend).forEach(e => {
 					const [lvl, data] = e;
+					let symbol2BackgroundGradient;
 
-					const div = document.createElement("div");
-					div.classList.add("col-md-4", "d-flex", "justify-content-start", "align-items-center");
+					const itemDiv = document.createElement("div");
+					itemDiv.classList.add("col-md-4", "d-flex", "justify-content-start", "align-items-center");
 					const symbol1 = document.createElement("div");
 					symbol1.classList.add("map-stats-symbol");
 					symbol1.style.width = `${Math.ceil(data.minSize*1.5)}px`;
@@ -431,22 +446,113 @@ script.
 					symbol1.style.borderRadius = `${Math.ceil(data.minSize*1.5/2)}px`;
 					symbol1.style.backgroundColor = data.color;
 
+					const symbol1LabelDiv = document.createElement("div");
+					symbol1LabelDiv.classList.add("text-right");
+					const symbol1LabelBoundary = document.createElement("div");
+					symbol1LabelBoundary.classList.add("map-stats-symbol-boundary");
+					const symbol1LabelBoundaryLabel = document.createElement("span");
+					symbol1LabelBoundaryLabel.classList.add("font-weight-bold");
+					symbol1LabelBoundaryLabel.appendChild(document.createTextNode(`${admLvlToText[lvl]}`));
+					symbol1LabelBoundary.appendChild(symbol1LabelBoundaryLabel);
+					symbol1LabelBoundary.appendChild(document.createElement("br"));
+					symbol1LabelBoundary.appendChild(document.createTextNode(`${data.prjDeltaMin}`));
+					symbol1LabelDiv.appendChild(symbol1LabelBoundary);
+
+					const symbol1LabelLowerDelta = document.createElement ("div");
+					symbol1LabelLowerDelta.classList.add("map-stats-symbol-dailydelta");
+					symbol1LabelLowerDelta.appendChild(document.createTextNode("Global "));
+					const symbol1LabelLowerDeltaLabel = document.createElement("span");
+					symbol1LabelLowerDeltaLabel.style.textDecoration = "overline";
+					symbol1LabelLowerDeltaLabel.appendChild(document.createTextNode("24h"));
+					symbol1LabelLowerDelta.appendChild(symbol1LabelLowerDeltaLabel);
+					symbol1LabelLowerDelta.appendChild(document.createTextNode(" "));
+					if (data.dailyDeltaMin != 0){
+						symbol1LabelLowerDelta.appendChild(createDeltaElement(data.dailyDeltaMin, null, false));
+						symbol2BackgroundGradient = "#DF0000"
+					}else{
+						symbol1LabelLowerDelta.appendChild(document.createTextNode("-"));
+						symbol2BackgroundGradient = "grey"
+					}
+					symbol1LabelDiv.appendChild(symbol1LabelLowerDelta);
+
+					symbol2BackgroundGradient += ", white";
+
 					const symbol2 = symbol1.cloneNode(true);
+					symbol2.classList.add("map-stats-symbol-casing");
 					symbol2.style.width = `${Math.ceil(data.maxSize*1.5)}px`;
 					symbol2.style.height = `${Math.ceil(data.maxSize*1.5)}px`;
 					symbol2.style.borderRadius = `${Math.ceil(data.maxSize*1.5/2)}px`;
 
-					div.appendChild(document.createTextNode(`${admLvlToText[lvl]} : ${data.minValue}`));
-					div.appendChild(symbol1);
-					div.appendChild(symbol2);
-					div.appendChild(document.createTextNode(data.maxValue));
-					mapStatsLegend.appendChild(div);
+					const symbol2LabelDiv = document.createElement("div");
+					const symbol2LabelBoundary = document.createElement("div");
+					symbol2LabelBoundary.classList.add("map-stats-symbol-boundary");
+					const symbol2LabelBoundaryLabel = document.createElement("span");
+					symbol2LabelBoundaryLabel.appendChild(document.createTextNode(`${data.maxBoundary}`));
+					symbol2LabelBoundary.appendChild(symbol2LabelBoundaryLabel);
+					symbol2LabelBoundary.appendChild(document.createElement("br"));
+					symbol2LabelBoundary.appendChild(document.createTextNode(`${data.prjDeltaMax}`));
+					symbol2LabelDiv.appendChild(symbol2LabelBoundary);
+
+					const symbol2LabelUpperDelta = document.createElement ("div");
+					symbol2LabelUpperDelta.classList.add("map-stats-symbol-dailydelta");
+					symbol2LabelUpperDelta.appendChild(document.createTextNode("Global "));
+					const symbol2LabelUpperDeltaLabel = document.createElement("span");
+					symbol2LabelUpperDeltaLabel.style.textDecoration = "overline";
+					symbol2LabelUpperDeltaLabel.appendChild(document.createTextNode("24h"));
+					symbol2LabelUpperDelta.appendChild(symbol2LabelUpperDeltaLabel);
+					symbol2LabelUpperDelta.appendChild(document.createTextNode(" "));
+					if (data.dailyDeltaMax != 0){
+						symbol2LabelUpperDelta.appendChild(createDeltaElement(data.dailyDeltaMax, null, false));
+						symbol2BackgroundGradient += ", #24b424"
+					}else{
+						symbol2LabelUpperDelta.appendChild(document.createTextNode("-"));
+						symbol2BackgroundGradient += ", grey"
+					}
+					symbol2LabelDiv.appendChild(symbol2LabelUpperDelta);
+
+					symbol2.style.background = `linear-gradient(${data.color}, ${data.color}) padding-box, linear-gradient(to right, ${symbol2BackgroundGradient}) border-box`;
+
+					itemDiv.appendChild(symbol1LabelDiv);
+					itemDiv.appendChild(symbol1);
+					itemDiv.appendChild(symbol2);
+					itemDiv.appendChild(symbol2LabelDiv);
+					mapStatsLegend.appendChild(itemDiv);
 				});
 			}
 			else {
 				mapStatsContainer.parentNode.classList.add("d-none");
 			}
 		});
+	}
+
+	const createDeltaElement = (delta, title, detail) => {
+		let delta_label = "0";
+		let delta_colour = "#000000";
+		if (delta < 0){
+			delta_label = `\u25bc ${delta}`
+			delta_colour = "#8b0a0a"
+		}else if (delta > 0){
+			delta_label = `\u25b2 ${delta}`
+			delta_colour = "#17791d"
+		}
+
+		if (detail){
+			delta_label = `\u00a0(${delta_label})`;
+		}
+
+		let spanDelta = document.createElement("span");
+		spanDelta.appendChild(document.createTextNode(`${delta_label}`));
+		spanDelta.style.color = delta_colour;
+		let spanResult = spanDelta;
+
+		if (title != null){
+			let spanTitle = document.createElement("span");
+			spanTitle.appendChild(document.createTextNode(title));
+			spanTitle.appendChild(spanDelta);
+			spanResult = spanTitle;
+		}
+
+		return spanResult;
 	}
 
 	let delayDisplayStats;

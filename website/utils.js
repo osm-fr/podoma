@@ -358,13 +358,13 @@ exports.getMapStyle = (p) => {
 };
 
 // Map style JSON for statistics
-exports.getMapStatsStyle = (p, maxPerLevel) => {
+exports.getMapStatsStyle = (p, prjDeltaPerLevel, dailyDeltaPerLevel) => {
 	return fetch(CONFIG.VECT_STYLE, { headers: { "Origin": CONFIG.WEBSITE_URL } })
 	.then(res => res.ok ? res.json() : getFallbackStyle())
 	.then(style => {
 		let colors = {
-			"2": "#fe3521",
-			"4": "#2196F3",
+			"2": "#a32b20",
+			"4": "#186fb6",
 			"6": "#4A148C",
 			"8": "#004D40"
 		}
@@ -387,18 +387,31 @@ exports.getMapStatsStyle = (p, maxPerLevel) => {
 		if(p && p.statistics && p.statistics.count) {
 			let circleColors = ["match", ["get", "admin_level"]];
 			let circlesRadius = ["match", ["get", "admin_level"]];
+			let circlesStrokeColor = ["match", ["get", "admin_level"]];
+			let circlesStrokeWidth = ["match", ["get", "admin_level"]];
 			let condOpacity = ["interpolate", ["linear"], ["zoom"]];
 			let oldZLevel = null;
 
 			Object.keys(adminLevels).forEach(adminLevel => {
-				if (maxPerLevel.hasOwnProperty(adminLevel)){
-					let minVal = Math.min(1, maxPerLevel[adminLevel]);
-					legend[adminLevel] = { color: colors[adminLevel], minSize: 3, minValue: minVal, maxSize: maxSizes[adminLevel], maxValue: maxPerLevel[adminLevel] };
-					
-					if (minVal < maxPerLevel[adminLevel]){
-						circlesRadius.push(parseInt(adminLevel));
-						circlesRadius.push(["interpolate", ["linear"], ["get", "nb"], 0, 0, minVal, 3, maxPerLevel[adminLevel], maxSizes[adminLevel]]);
-						circleColors.push(parseInt(adminLevel));
+				let admLvl = parseInt(adminLevel);
+
+				if (prjDeltaPerLevel.hasOwnProperty(adminLevel)){
+					let minDelta = Math.min(1, prjDeltaPerLevel[adminLevel].max);
+					legend[adminLevel] = {
+						color: colors[adminLevel],
+						minSize: 3,
+						prjDeltaMin: prjDeltaPerLevel[adminLevel].min,
+						prjDeltaMax: prjDeltaPerLevel[adminLevel].max,
+						dailyDeltaMin: 0,
+						dailyDeltaMax: 0,
+						maxSize: maxSizes[adminLevel],
+						maxBoundary: prjDeltaPerLevel[adminLevel].boundary
+					};
+
+					if (minDelta < prjDeltaPerLevel[adminLevel].max){
+						circlesRadius.push(admLvl);
+						circlesRadius.push(["interpolate", ["linear"], ["get", "delta_project"], 0, 0, minDelta, 3, parseInt(prjDeltaPerLevel[adminLevel].max), maxSizes[adminLevel]]);
+						circleColors.push(admLvl);
 						circleColors.push(colors[adminLevel]);
 
 						if (oldZLevel != null){
@@ -406,14 +419,40 @@ exports.getMapStatsStyle = (p, maxPerLevel) => {
 							condOpacity.push(0);
 						}
 						for (zLevel of adminLevels[adminLevel]){
-							condOpacity.push(zLevel, ["case", ["==", ["get", "admin_level"], parseInt(adminLevel)], 1, 0 ]);
+							condOpacity.push(zLevel, ["case", ["==", ["get", "admin_level"], admLvl], 1, 0 ]);
 							oldZLevel = zLevel;
 						}
+					}
+				}
+				if (dailyDeltaPerLevel.hasOwnProperty(adminLevel)){
+					let dailyDeltaMin = parseInt(dailyDeltaPerLevel[adminLevel][0]);
+					let dailyDeltaMax = parseInt(dailyDeltaPerLevel[adminLevel][1]);
+
+					legend[adminLevel].dailyDeltaMin = dailyDeltaMin;
+					legend[adminLevel].dailyDeltaMax = dailyDeltaMax;
+
+					if (dailyDeltaMin < 0 || dailyDeltaMax > 0){
+						let strWidthInterpolate = ["interpolate", ["linear"], ["get", "delta_daily"]];
+						let strColorInterpolate = ["interpolate", ["linear"], ["get", "delta_daily"]];
+
+						strWidthInterpolate.push(Math.min(-3, dailyDeltaMin), 4);
+						strColorInterpolate.push(Math.min(-3, dailyDeltaMin), "#DF0000");
+						strWidthInterpolate.push(0, 2);
+						strColorInterpolate.push(0, "#FFFFFF");
+						strWidthInterpolate.push(Math.max(3, dailyDeltaMax), 4);
+						strColorInterpolate.push(Math.max(3, dailyDeltaMax), "#24b424");
+
+						circlesStrokeWidth.push(admLvl);
+						circlesStrokeWidth.push(strWidthInterpolate);
+						circlesStrokeColor.push(admLvl);
+						circlesStrokeColor.push(strColorInterpolate);
 					}
 				}
 			});
 			circlesRadius.push(0);
 			circleColors.push ("#999999");
+			circlesStrokeWidth.push(2);
+			circlesStrokeColor.push ("#FFFFFF");
 
 			// Source stats
 			p.datasources
@@ -439,8 +478,8 @@ exports.getMapStatsStyle = (p, maxPerLevel) => {
 						"circle-sort-key": ["-", ["get", "nb"]]
 					},
 					paint: {
-						"circle-stroke-color": "white",
-						"circle-stroke-width": 2,
+						"circle-stroke-color": circlesStrokeColor,
+						"circle-stroke-width": circlesStrokeWidth,
 						"circle-stroke-opacity": condOpacity,
 						"circle-color": circleColors,
 						"circle-opacity": condOpacity,
