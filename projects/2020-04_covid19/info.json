@@ -11,6 +11,7 @@
 	},
 	"database": {
 		"osmium_tag_filter": "nwr/opening_hours:covid19",
+		"live": true,
 		"imposm": {
 			"types": ["point", "polygon"],
 			"mapping": { "opening_hours:covid19": ["__any__"] }

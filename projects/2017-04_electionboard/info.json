@@ -10,6 +10,7 @@
 	},
 	"database": {
 		"osmium_tag_filter": "n/advertising=board n/message=political",
+		"live": true,
 		"imposm": {
 			"types": ["point"],
 			"mapping": { "advertising": ["board"], "message": ["political"] }

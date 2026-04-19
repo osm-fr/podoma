@@ -10,6 +10,7 @@
 	},
 	"database": {
 		"osmium_tag_filter": "nwr/amenity=toilets",
+		"live": true,
 		"imposm": {
 			"types": ["point", "polygon"],
 			"mapping": {
