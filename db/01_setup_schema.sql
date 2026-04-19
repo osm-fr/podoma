@@ -58,6 +58,30 @@ CREATE TABLE pdm_counts_dates (
 );
 CREATE INDEX ON pdm_counts_dates using btree(project_id, ts);
 
+CREATE VIEW pdm_counts_dates_deltas AS (
+WITH ordered_delta AS (
+  SELECT
+    project_id,
+    ts,
+    ts - LEAD(ts) OVER (PARTITION BY project_id ORDER BY ts DESC) AS delta_last
+  FROM pdm_counts_dates
+),
+dates_sequeces AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (PARTITION BY project_id ORDER BY ts desc) - ROW_NUMBER() OVER (PARTITION BY project_id, delta_last ORDER BY ts desc) AS seq
+  FROM ordered_delta
+)
+SELECT
+  project_id,
+  max(ts) as ts,
+  delta_last as delta,
+  COUNT(ts) AS counter
+  FROM dates_sequeces
+  GROUP BY project_id, delta_last, seq
+  ORDER by ts
+);
+
 CREATE TABLE pdm_feature_counts(
 	project_id int NOT NULL,
 	ts TIMESTAMP NOT NULL,
@@ -173,7 +197,7 @@ BEGIN
 		-- 1st, 2nd and 3rd position
 		IF result_position <= 3 THEN
 			id := CASE WHEN result_position = 1 THEN 'score_1st' WHEN result_position = 2 THEN 'score_2nd' ELSE 'score_3rd' END;
-			name := CASE WHEN result_position = 1 THEN '1ère place' WHEN result_position = 2 THEN '2ème place' ELSE '3ème place' END;
+			name := CASE WHEN result_position = 1 THEN '1st place' WHEN result_position = 2 THEN '2nd place' ELSE '3rd place' END;
 			description := 'Vous êtes sur le podium, félicitations !';
 			acquired := true;
 			progress := 100;
@@ -181,7 +205,7 @@ BEGIN
 		-- Near podium
 		ELSIF result_position <= 10 THEN
 			id := 'score_3rd';
-			name := 'Près du podium';
+			name := 'Near the podium';
 			description := 'Vous n''êtes qu''à quelques points d''être sur le podium !';
 			acquired := false;
 			progress := FLOOR((result_position - 3)::float / 7 * 100);

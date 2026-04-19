@@ -567,7 +567,29 @@ app.get("/projects/:name/stats", (req, res) => {
         [p.id]
         )
         .then((results) => ({
-          osm_counts: results.rows
+          osm_counts: results.rows,
+          "daily":{
+            "ts": results.rows.length > 0 &&
+              results.rows[results.rows.length - 1].ts,
+            "ts_start": results.rows[0].ts,
+            "count":results.rows.length > 0 &&
+              results.rows[results.rows.length - 1].amount,
+            "added":
+              results.rows.length > 0 &&
+              results.rows[results.rows.length - 1].amount -
+                results.rows[0].amount
+          },
+          "past": {
+            "ts": results.rows.length > 1 &&
+              results.rows[results.rows.length - 1].ts,
+            "ts_start": results.rows[0].ts,
+            "count": results.rows.length > 1 &&
+              results.rows[results.rows.length - 2].amount,
+            "added":
+              results.rows.length > 1 &&
+              results.rows[results.rows.length - 2].amount -
+                results.rows[0].amount
+          }
         })),
     );
 
@@ -577,7 +599,9 @@ app.get("/projects/:name/stats", (req, res) => {
           `SELECT COUNT(*) AS amount FROM pdm_project_${p.name.split("_").pop()}`,
         )
         .then((results) => ({
-          count: results.rows.length > 0 && results.rows[0].amount,
+          "current":{
+            "count": results.rows.length > 0 && parseInt(results.rows[0].amount)
+          }
         })),
     );
 
@@ -585,18 +609,20 @@ app.get("/projects/:name/stats", (req, res) => {
       allPromises.push(
         pool
           .query(
-            `SELECT admin_level, max(nb) AS amount FROM pdm_boundary_tiles WHERE project_id = $1 AND label IS NULL GROUP BY admin_level`,[
+            `SELECT d.admin_level, d.delta_project_min, d.delta_project_max, d.delta_daily_min, d.delta_daily_max, b.name as boundary_max FROM pdm_boundary_dash d JOIN pdm_boundary b ON b.osm_id=d.boundary_max WHERE project_id = $1 AND label IS NULL`,[
              p.id
           ])
           .then((results) => {
-            const maxLevel = {};
+            const prjDeltaLevel = {};
+            const dailyDeltaLevel = {};
             results.rows.forEach((r) => {
-              if (!isNaN(parseInt(r.amount))) {
-                maxLevel[r.admin_level] = r.amount;
+              if (!isNaN(parseInt(r.delta_project_max))) {
+                prjDeltaLevel[r.admin_level] = {"min":r.delta_project_min, "max":r.delta_project_max, "boundary": r.boundary_max};
               }
+              dailyDeltaLevel[r.admin_level] = [r.delta_daily_min, r.delta_daily_max];
             });
-            return Object.keys(maxLevel).length > 0
-              ? getMapStatsStyle(p, maxLevel)
+            return Object.keys(prjDeltaLevel).length > 0
+              ? getMapStatsStyle(p, prjDeltaLevel, dailyDeltaLevel)
               : null;
           })
           .then((mapStyle) => ({ mapStyle })),
@@ -607,13 +633,20 @@ app.get("/projects/:name/stats", (req, res) => {
   // Fetch mappers count
   allPromises.push(
     pool
-      .query(`SELECT * FROM pdm_mapper_counts WHERE project_id = $1 ORDER BY ts DESC limit 1`, [
+      .query(`SELECT * FROM pdm_mapper_counts WHERE project_id = $1 and label is null ORDER BY ts DESC limit 2`, [
         p.id,
       ])
       .then((results) => ({
-        nbContributors: results.rows[0].amount,
-        nbContributors_1d: results.rows[0].amount_1d,
-        nbContributors_30d: results.rows[0].amount_30d
+        "daily":{
+          nbContributors: results.rows[0].amount,
+          nbContributors_1d: results.rows[0].amount_1d,
+          nbContributors_30d: results.rows[0].amount_30d
+        },
+        "past": {
+          nbContributors: results.rows.length > 1 && results.rows[1].amount,
+          nbContributors_1d: results.rows.length > 1 && results.rows[1].amount_1d,
+          nbContributors_30d: results.rows.length > 1 && results.rows[1].amount_30d
+        }
       })),
   );
 
@@ -685,6 +718,12 @@ app.get("/projects/:name/stats", (req, res) => {
           Object.entries(r.value).forEach((e) => {
             if (!toSend[e[0]]) {
               toSend[e[0]] = e[1];
+            } else if (["chart", "current", "daily", "past"].includes(e[0])) {
+              if (toSend[e[0]] instanceof Array){
+                toSend[e[0]] = toSend[e[0]].concat(e[1]);
+              }else if (toSend[e[0]] instanceof Object){
+                toSend[e[0]] = Object.assign(toSend[e[0]], e[1]);
+              }
             }
           });
         }else if (r != null && r.status === "rejected"){
@@ -1028,6 +1067,7 @@ app.get("/users/:name", (req, res) => {
             });
           })
           .catch((e) => {
+            console.error("Error fetching badges:", e);
             res.redirect("/error/500");
           });
       } else {
@@ -1035,6 +1075,7 @@ app.get("/users/:name", (req, res) => {
       }
     })
     .catch((e) => {
+      console.error("Error fetching user ID:", e);
       res.redirect("/error/500");
     });
 });

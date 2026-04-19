@@ -55,10 +55,10 @@ script.
 
 							const p = document.createElement("p");
 							p.classList.add("m-0");
-							p.appendChild(document.createTextNode(badge.name));
+							p.appendChild(document.createTextNode(__(badge.name)));
 							domBadge.appendChild(p);
 
-							window.dispatchEvent(new CustomEvent("pdm_notifs_add", { detail: { label: `#{__("New badges")} : ${badge.name}`, image: imgName, url: `/users/${encodeURIComponent(window.osm_user.name)}`, title: "#{__("Show all badges")}" } }));
+							window.dispatchEvent(new CustomEvent("pdm_notifs_add", { detail: { label: `#{__("New badges")} : ${__(badge.name)}`, image: imgName, url: `/users/${encodeURIComponent(window.osm_user.name)}`, title: "#{__("Show all badges")}" } }));
 						}
 						else {
 							const subdiv = document.createElement("div");
@@ -69,7 +69,7 @@ script.
 
 							const p = document.createElement("p");
 							p.classList.add("m-0", "text-muted");
-							p.innerHTML = `${badge.name} <small>(${badge.progress}%)</small>`;
+							p.innerHTML = `${__(badge.name)} <small>(${badge.progress}%)</small>`;
 							domBadge.appendChild(p);
 						}
 
