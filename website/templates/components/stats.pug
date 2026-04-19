@@ -98,7 +98,7 @@ script.
 							const sd = document.createElement("div")
 							sd.classList.add(dVal > 0 ? "text-success" : "text-danger")
 							sd.appendChild(addIcon(dVal > 0 ? "arrow-trend-up" : "arrow-trend-down"));
-							sd.appendChild(document.createTextNode(dClass+" "+dVal));
+							sd.appendChild(document.createTextNode(" " + dClass + " " + dVal));
 							d.appendChild(sd);
 						}else{
 							dLen--;
@@ -122,49 +122,63 @@ script.
 				st.appendChild(document.createTextNode(subtitle));
 				sb.appendChild(st);
 
-				if(text){
-					const te = document.createElement("p");
-					te.classList.add("card-text", "mb-auto");
-					te.appendChild(document.createTextNode(text));
-					sb.appendChild(te);
-				}
-
 				blocks.appendChild(b);
 			};
 
-			const startDate = "#{start_date}",
-				softStartDate = "#{soft_start_date || ''}",
+			const softStartDate = "#{soft_start_date || ''}",
 				softEndDate = "#{soft_end_date || ''}",
-				endDate = "#{end_date || ''}",
-				startDateObj = new Date(startDate),
 				softStartDateObj = new Date(softStartDate),
 				softEndDateObj = new Date(softEndDate),
-				endDateObj = new Date(endDate),
-				addedSubtitle = "#{__('%s added', title.toLowerCase())}",
 				useSoftDates = "#{CONFIG.USE_SOFT_DATES || ''}" === "true"  && !isNaN(softStartDateObj) && !isNaN(softEndDateObj);
-			let addedDateRange = null;
 
-			if (res.osm_counts?.length > 1) {
-				if(useSoftDates) {
-					const startIndex = res.osm_counts.findIndex(x => new Date(x.ts) >= softStartDateObj),
-						endIndex = res.osm_counts.findIndex(x => new Date(x.ts) >= softEndDateObj),
-						softStartItem = res.osm_counts[Math.max(0, startIndex)],
-						softEndItem = res.osm_counts[endIndex >= 0 ? endIndex : res.osm_counts.length - 1],
-						addedTitle = numberFormat.format(softEndItem.amount - softStartItem.amount),
-						softDateRange = `(${new Intl.DateTimeFormat().formatRange(new Date(softStartItem.ts), new Date(softEndItem.ts))})`;
-					addBlock(addedTitle, addedSubtitle, softDateRange);
-				}
-
-				const startItem = res.osm_counts[0],
-					endItem = res.osm_counts[res.osm_counts.length - 1],
-					addedTitle = numberFormat.format(endItem.amount - startItem.amount);
-				addedDateRange = useSoftDates && `(${new Intl.DateTimeFormat().formatRange(new Date(startItem.ts), new Date(endItem.ts))})`;
-				addBlock(addedTitle, addedSubtitle, addedDateRange);
+			if (useSoftDates && res.osm_counts?.length > 1) {
+				const startIndex = res.osm_counts.findIndex(x => new Date(x.ts) >= softStartDateObj),
+					endIndex = res.osm_counts.findIndex(x => new Date(x.ts) >= softEndDateObj),
+					softStartItem = res.osm_counts[Math.max(0, startIndex)],
+					softEndItem = res.osm_counts[endIndex >= 0 ? endIndex : res.osm_counts.length - 1],
+					softDateRange = new Intl.DateTimeFormat().formatRange(new Date(softStartItem.ts), new Date(softEndItem.ts)),
+					sinceBeginning = `#{__('since %s', "${(new Date(res.daily.ts_start)).toLocaleDateString()}")}`;
+				addBlock(
+					"plus",
+					numberFormat.format(softEndItem.amount - softStartItem.amount),
+					`#{__('%s added (%s)', title.toLowerCase(), "${softDateRange}")}`,
+					{
+						"24h": res.daily.added - res.past.added,
+						[sinceBeginning]: res.daily.added
+					}
+				);
+			} else if (res.daily?.added) {
+				addBlock(
+					"plus",
+					numberFormat.format(res.daily.added),
+					`#{__('%s added since %s', title.toLowerCase(), "${(new Date(res.daily.ts_start)).toLocaleDateString()}")}`,
+					{"24h": res.daily.added - res.past.added}
+				);
 			}
-			if(res.daily && res.daily.added) { addBlock("plus", numberFormat.format(res.daily.added), `#{__('%s added since %s', title.toLowerCase(), "${(new Date(res.daily.ts_start)).toLocaleDateString()}")}`, {"24h": res.daily.added - res.past.added}); }
-			if(res.current && res.current.count) { addBlock("location-dot", numberFormat.format(res.current.count), "#{__('%s currently in OSM', title.toLowerCase())}", {"live": res.current.count - res.daily.count}); }
-			if(res.tasksSolved !== undefined) { addBlock("triangle-exclamation", numberFormat.format(res.tasksSolved), "#{statistics.osmose_tasks}", null); }
-			if(res.daily && res.daily.nbContributors) { addBlock("users", numberFormat.format(res.daily.nbContributors), "#{__("contributors")}", {"24h": res.daily.nbContributors - res.past.nbContributors}); }
+			if(res.current?.count) {
+				addBlock(
+					"location-dot",
+					numberFormat.format(res.current.count),
+					"#{__('%s currently in OSM', title.toLowerCase())}",
+					res.daily?.count ? {"live": res.current.count - res.daily.count} : null
+				);
+			}
+			if(res.tasksSolved !== undefined) {
+				addBlock("triangle-exclamation", numberFormat.format(res.tasksSolved), "#{statistics.osmose_tasks}", null);
+			}
+			//- if (useSoftDates) {
+				//if(res.nbContributors) { addBlock(numberFormat.format(res.nbContributors), "#{__('contributors')}", addedDateRange); } // We use addedDateRange here as well because it's more reliable than the project start/end dates, for example if they have been changed after data initialization
+				// TODO
+			//- } else if (res.daily && res.daily.nbContributors) {
+			if (res.daily?.nbContributors) {
+				addBlock(
+					"users",
+					numberFormat.format(res.daily.nbContributors),
+					`#{__('contributors since %s', "${(new Date(res.daily.ts_start)).toLocaleDateString()}")}`,
+					{ "24h": res.daily.nbContributors - res.past.nbContributors }
+				);
+			}
+			
 
 			// Leaderboard
 			if(res.leaderboard && res.leaderboard.length > 0) {

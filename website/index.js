@@ -332,24 +332,27 @@ app.get("/projects/:name", (req, res) => {
     .concat(all.current.filter((p) => p.name !== req.params.name));
   const isActive =
     all.current.length > 0 &&
-    all.current.find((p) => p.name === req.params.name) !== undefined;
+    all.current.some((p) => p.name === req.params.name);
   const isNext =
-    all.next && all.next.find((p) => p.name === req.params.name) !== undefined;
-  const isHardEnded = all.past.find(p => (
+    all.next && all.next.some((p) => p.name === req.params.name);
+  const isHardEnded = all.past.some(p => (
     p.id === req.params.id
     && p.end_date != null
     && new Date(p.end_date + "T23:59:59Z").getTime() < Date.now()
-  )) !== undefined;
+  ));
   
+  const RECENT_PAST_DAYS = 30,
+    recentPastThreshold = Date.now() - RECENT_PAST_DAYS * 24 * 60 * 60 * 1000;
   const isRecentPast =
     all.past &&
     all.past.length > 0 &&
-    all.past.find(
-      (p) =>
-        p.name === req.params.name && p.end_date != null && 
-        new Date(p.end_date + "T23:59:59Z").getTime() >=
-          Date.now() - 30 * 24 * 60 * 60 * 1000,
-    ) !== undefined;
+    all.past.some((p) =>{
+      const endDate = CONFIG.USE_SOFT_DATES && p.soft_end_date || p.end_date;
+      return p.name === req.params.name && 
+        endDate != null && 
+        new Date(endDate + "T23:59:59Z").getTime() >= recentPastThreshold;
+    });
+  
   res.render(
     "pages/project",
     Object.assign(
@@ -433,7 +436,7 @@ app.get("/projects/:name/stats", (req, res) => {
   const osmUserAuthentified =
     typeof req.query.osm_user === "string" &&
     req.query.osm_user.trim().length > 0;
-  const startDate = CONFIG.USE_SOFT_DATES ? p.soft_start_date : p.start_date;
+  const startDate = CONFIG.USE_SOFT_DATES && p.soft_start_date || p.start_date;
   const daysToKeep = (day) => {
     if (
       Date.now() - new Date(startDate).getTime() <
@@ -566,31 +569,26 @@ app.get("/projects/:name/stats", (req, res) => {
         `,
         [p.id]
         )
-        .then((results) => ({
-          osm_counts: results.rows,
-          "daily":{
-            "ts": results.rows.length > 0 &&
-              results.rows[results.rows.length - 1].ts,
-            "ts_start": results.rows[0].ts,
-            "count":results.rows.length > 0 &&
-              results.rows[results.rows.length - 1].amount,
-            "added":
-              results.rows.length > 0 &&
-              results.rows[results.rows.length - 1].amount -
-                results.rows[0].amount
-          },
-          "past": {
-            "ts": results.rows.length > 1 &&
-              results.rows[results.rows.length - 1].ts,
-            "ts_start": results.rows[0].ts,
-            "count": results.rows.length > 1 &&
-              results.rows[results.rows.length - 2].amount,
-            "added":
-              results.rows.length > 1 &&
-              results.rows[results.rows.length - 2].amount -
-                results.rows[0].amount
-          }
-        })),
+        .then((results) => {
+          const firstItem = results.rows[0],
+            lastItem = results.rows.length > 0 ? results.rows[results.rows.length - 1] : null,
+            secondLastItem = results.rows.length > 1 ? results.rows[results.rows.length - 2] : null;
+          return {
+            osm_counts: results.rows,
+            "daily":{
+              "ts": lastItem?.ts,
+              "ts_start": firstItem?.ts,
+              "count": lastItem?.amount,
+              "added": firstItem && lastItem && lastItem.amount - firstItem.amount
+            },
+            "past": {
+              "ts": secondLastItem?.ts,
+              "ts_start": firstItem?.ts,
+              "count": secondLastItem?.amount,
+              "added": firstItem && secondLastItem && secondLastItem.amount - firstItem.amount
+            }
+          };
+        }),
     );
 
     allPromises.push(
