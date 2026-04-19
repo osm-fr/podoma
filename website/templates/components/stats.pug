@@ -63,17 +63,56 @@ script.
 			// Blocks for small stats
 			const blocks = document.getElementById("stats-blocks");
 			blocks.innerHTML = '';
-			const addBlock = (title, subtitle) => {
+			const addIcon = (icon) => {
+				const i = document.createElement("i");
+				i.classList.add("fa", "fa-"+icon);
+				return i;
+			}
+			const addBlock = (icon, title, subtitle, deltas) => {
+				if (icon == null){
+					icon = "caret-right"
+				}
+				let dLen = 0;
+				if (deltas != null){
+					dLen = Object.keys(deltas).length;
+				}
 				const b = document.createElement("div");
-				b.classList.add("col-md-4", "mb-2");
+				b.classList.add("col-lg-4", "mb-2");
 
 				const sb = document.createElement("div");
-				sb.classList.add("p-4", "no-gutters", "border", "rounded", "overflow-hidden", "flex-md-row", "shadow-sm", "position-relative", "h-100");
+				sb.classList.add("p-4", "no-gutters", "border", "rounded", "overflow-hidden", "flex-lg-row", "shadow-sm", "position-relative", "h-100");
 				b.appendChild(sb);
+				
+				if (dLen > 0){
+					const d = document.createElement("div");
+					d.classList.add("float-right");
+					
+					for (const dClass in deltas){
+						let dVal = deltas[dClass];
+						if (dVal != 0){
+							if (dVal > 0){
+								dVal = `+${dVal}`;
+							}
+							const sd = document.createElement("div")
+							sd.classList.add(dVal > 0 ? "text-success" : "text-danger")
+							sd.appendChild(addIcon(dVal > 0 ? "arrow-trend-up" : "arrow-trend-down"));
+							sd.appendChild(document.createTextNode(dClass+" "+dVal));
+							d.appendChild(sd);
+						}else{
+							dLen--;
+						}
+					}
+					if (dLen > 1){
+						d.style.marginTop = "-15px";
+						d.style.fontSize = "85%";
+					}
+					sb.appendChild(d);
+				}
 
 				const t = document.createElement("h3");
 				t.classList.add("mb-0");
-				t.appendChild(document.createTextNode(title));
+				t.appendChild(addIcon(icon));
+				t.appendChild(document.createTextNode(` ${title}`));
 				sb.appendChild(t);
 
 				const st = document.createElement("p");
@@ -84,10 +123,10 @@ script.
 				blocks.appendChild(b);
 			};
 
-			if(res.added) { addBlock(numberFormat.format(res.added), "#{__('%s added', title.toLowerCase())}"); }
-			if(res.count) { addBlock(numberFormat.format(res.count), "#{__('%s total in OSM', title.toLowerCase())}"); }
-			if(res.tasksSolved !== undefined) { addBlock(numberFormat.format(res.tasksSolved), "#{statistics.osmose_tasks}"); }
-			addBlock(numberFormat.format(res.nbContributors), "#{__("contributors")}");
+			if(res.daily && res.daily.added) { addBlock("plus", numberFormat.format(res.daily.added), `#{__('%s added since %s', title.toLowerCase(), "${(new Date(res.daily.ts_start)).toLocaleDateString()}")}`, {"24h": res.daily.added - res.past.added}); }
+			if(res.current && res.current.count) { addBlock("location-dot", numberFormat.format(res.current.count), "#{__('%s currently in OSM', title.toLowerCase())}", {"live": res.current.count - res.daily.count}); }
+			if(res.tasksSolved !== undefined) { addBlock("triangle-exclamation", numberFormat.format(res.tasksSolved), "#{statistics.osmose_tasks}", null); }
+			if(res.daily && res.daily.nbContributors) { addBlock("users", numberFormat.format(res.daily.nbContributors), "#{__("contributors")}", {"24h": res.daily.nbContributors - res.past.nbContributors}); }
 
 			// Leaderboard
 			if(res.leaderboard && res.leaderboard.length > 0) {
@@ -225,7 +264,7 @@ script.
 
 			// Notes count + chart
 			if(res.chartNotes) {
-				addBlock(numberFormat.format(res.openedNotes),`#{__("notes opened")} (${res.statClosedNotes} #{__("resolved")})`);
+				addBlock("pencil", numberFormat.format(res.openedNotes),`#{__("notes opened")} (${res.statClosedNotes} #{__("resolved")})`, null);
 
 				const myChart = new Chart(document.getElementById("stats-chart-notes").getContext("2d"), {
 					type: "line",
@@ -432,13 +471,13 @@ script.
 				// Boundary stats legends
 				const mapStatsLegend = document.getElementById("map-stats-legend");
 				mapStatsLegend.innerHTML = '';
-				const admLvlToText = { "2": "#{__("Country")}", "4": "#{__("Region")}", "6": "#{__("Department")}", "8": "#{__("City")}" };
+				const admLvlToText = { "2": "#{__("Country")}", "4": "#{__("Region")}", "6": "#{__("Depart.")}", "8": "#{__("City")}" };
 				Object.entries(res.mapStyle.legend).forEach(e => {
 					const [lvl, data] = e;
 					let symbol2BackgroundGradient;
 
 					const itemDiv = document.createElement("div");
-					itemDiv.classList.add("col-md-4", "d-flex", "justify-content-start", "align-items-center");
+					itemDiv.classList.add("col-lg-4", "d-flex", "justify-content-start", "align-items-center");
 					const symbol1 = document.createElement("div");
 					symbol1.classList.add("map-stats-symbol");
 					symbol1.style.width = `${Math.ceil(data.minSize*1.5)}px`;
@@ -455,7 +494,7 @@ script.
 					symbol1LabelBoundaryLabel.appendChild(document.createTextNode(`${admLvlToText[lvl]}`));
 					symbol1LabelBoundary.appendChild(symbol1LabelBoundaryLabel);
 					symbol1LabelBoundary.appendChild(document.createElement("br"));
-					symbol1LabelBoundary.appendChild(document.createTextNode(`${data.prjDeltaMin}`));
+					symbol1LabelBoundary.appendChild(document.createTextNode(`${numberFormat.format(data.prjDeltaMin)}`));
 					symbol1LabelDiv.appendChild(symbol1LabelBoundary);
 
 					const symbol1LabelLowerDelta = document.createElement ("div");
@@ -485,12 +524,12 @@ script.
 
 					const symbol2LabelDiv = document.createElement("div");
 					const symbol2LabelBoundary = document.createElement("div");
-					symbol2LabelBoundary.classList.add("map-stats-symbol-boundary");
+					symbol2LabelBoundary.classList.add("map-stats-symbol-boundary", "text-truncate");
 					const symbol2LabelBoundaryLabel = document.createElement("span");
 					symbol2LabelBoundaryLabel.appendChild(document.createTextNode(`${data.maxBoundary}`));
 					symbol2LabelBoundary.appendChild(symbol2LabelBoundaryLabel);
 					symbol2LabelBoundary.appendChild(document.createElement("br"));
-					symbol2LabelBoundary.appendChild(document.createTextNode(`${data.prjDeltaMax}`));
+					symbol2LabelBoundary.appendChild(document.createTextNode(`${numberFormat.format(data.prjDeltaMax)}`));
 					symbol2LabelDiv.appendChild(symbol2LabelBoundary);
 
 					const symbol2LabelUpperDelta = document.createElement ("div");

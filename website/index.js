@@ -575,10 +575,28 @@ app.get("/projects/:name/stats", (req, res) => {
               lineTension: 0,
             },
           ],
-          added:
-            results.rows.length > 0 &&
-            results.rows[results.rows.length - 1].amount -
-              results.rows[0].amount,
+          "daily":{
+            "ts": results.rows.length > 0 &&
+              results.rows[results.rows.length - 1].ts,
+            "ts_start": results.rows[0].ts,
+            "count":results.rows.length > 0 &&
+              results.rows[results.rows.length - 1].amount,
+            "added":
+              results.rows.length > 0 &&
+              results.rows[results.rows.length - 1].amount -
+                results.rows[0].amount
+          },
+          "past": {
+            "ts": results.rows.length > 1 &&
+              results.rows[results.rows.length - 1].ts,
+            "ts_start": results.rows[0].ts,
+            "count": results.rows.length > 1 &&
+              results.rows[results.rows.length - 2].amount,
+            "added":
+              results.rows.length > 1 &&
+              results.rows[results.rows.length - 2].amount -
+                results.rows[0].amount
+          }
         })),
     );
 
@@ -588,7 +606,9 @@ app.get("/projects/:name/stats", (req, res) => {
           `SELECT COUNT(*) AS amount FROM pdm_project_${p.name.split("_").pop()}`,
         )
         .then((results) => ({
-          count: results.rows.length > 0 && results.rows[0].amount,
+          "current":{
+            "count": results.rows.length > 0 && parseInt(results.rows[0].amount)
+          }
         })),
     );
 
@@ -620,13 +640,20 @@ app.get("/projects/:name/stats", (req, res) => {
   // Fetch mappers count
   allPromises.push(
     pool
-      .query(`SELECT * FROM pdm_mapper_counts WHERE project_id = $1 ORDER BY ts DESC limit 1`, [
+      .query(`SELECT * FROM pdm_mapper_counts WHERE project_id = $1 and label is null ORDER BY ts DESC limit 2`, [
         p.id,
       ])
       .then((results) => ({
-        nbContributors: results.rows[0].amount,
-        nbContributors_1d: results.rows[0].amount_1d,
-        nbContributors_30d: results.rows[0].amount_30d
+        "daily":{
+          nbContributors: results.rows[0].amount,
+          nbContributors_1d: results.rows[0].amount_1d,
+          nbContributors_30d: results.rows[0].amount_30d
+        },
+        "past": {
+          nbContributors: results.rows.length > 1 && results.rows[1].amount,
+          nbContributors_1d: results.rows.length > 1 && results.rows[1].amount_1d,
+          nbContributors_30d: results.rows.length > 1 && results.rows[1].amount_30d
+        }
       })),
   );
 
@@ -698,8 +725,12 @@ app.get("/projects/:name/stats", (req, res) => {
           Object.entries(r.value).forEach((e) => {
             if (!toSend[e[0]]) {
               toSend[e[0]] = e[1];
-            } else if (e[0] === "chart") {
-              toSend.chart = toSend.chart.concat(e[1]);
+            } else if (["chart", "current", "daily", "past"].includes(e[0])) {
+              if (toSend[e[0]] instanceof Array){
+                toSend[e[0]] = toSend[e[0]].concat(e[1]);
+              }else if (toSend[e[0]] instanceof Object){
+                toSend[e[0]] = Object.assign(toSend[e[0]], e[1]);
+              }
             }
           });
         }else if (r != null && r.status === "rejected"){
