@@ -11,6 +11,7 @@
 	},
 	"database": {
 		"osmium_tag_filter": "n/emergency=defibrillator",
+		"live": true,
 		"imposm": {
 			"types": ["point"],
 			"mapping": { "emergency": ["defibrillator"] }

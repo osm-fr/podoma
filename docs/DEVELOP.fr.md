@@ -109,11 +109,13 @@ Les propriétés dans `info.json` sont les suivantes :
 - `database.imposm` : configuration pour l'import des données actualisées d'OSM (`types` pour les types de géométrie à prendre en compte, `mapping` pour les attributs, voir [la documentation Imposm](https://imposm.org/docs/imposm3/latest/mapping.html#tags) pour le format de ces champs)
 - `database.compare` : configuration pour la recherche d'objets OpenStreetMap à comparer, suit le format de `database.imposm` avec une propriété supplémentaire `radius` (rayon de rapprochement en mètres)
 - `database.labels` : Objet de définition d'étiquettes attribuées aux versions d'objets en fonction de leurs tags. Chaque étiquette est associée au path JSON utilisé par la fonction [jsonb_path_exists](https://www.postgresql.org/docs/current/functions-json.html#FUNCTIONS-JSON-PROCESSING-TABLE) utilisée sur la chaine de tags. Exemple `"labels":{"etiquette1":"$ ? (@.substation==\"transmission\")"}` pour attribuer `etiquette1` à tous les objets portant le tags `substation=transmission`. Voir ci-dessous à propos du filtrage
+- `database.live` : Active les traitements qui s'appuient sur la présence d'une table tenue à jour en live, par imposm ou tout autre processus (voir remplacer imposm ci-dessous).
 - `datasources` : liste des sources de données qui apparaissent sur la page (voir ci-dessous)
 - `teams` : liste d'équipes utiles à la construction des statistiques et définies par leur nom correspondant à un tableau de noms d'utilisateurs OSM.
 - `statistics` : configuration de l'affichage des statistiques sur la page du projet
 - `statistics.count` : activer le comptage des objets du projet
 - `statistics.length` : activer les mesures de longueurs et de surface des objets du projet. Oblige à réinitialiser le projet en cas de changement.
+- `statistics.labels` : Active la classification des contributions sur les étiquettes. En conséquence, des points de contribution seront aussi attribués aux utilisateurs en fonction des étiquettes.
 - `statistics.feature_name` : nom à afficher à l'utilisateur pour ces objets
 - `statistics.osmose_tasks` : nom des tâches accomplies via Osmose
 - `statistics.points` : configuration des points obtenus selon la contribution au projet (en lien avec `contribs.sql`). `{"add":1, "edit":2}`
@@ -170,8 +172,9 @@ La syntaxe qui permet de les définir est basée sur le [SQL/JSON de Postgresql]
 ```
 
 L'attribution des étiquettes est réalisé durant la phase `update_changes`. Seule une réinitialisation de cette phase permet de réviser naturellement la population de versions concernée par une modification des définitions.  
-Toutefois, il est possible manuellement de supprimer puis attribuer à nouveau une étiquette `label1` donnée, par les quatre commandes suivantes :
+La classification des contributions sur les étiquettes n'est réalisées que si `statistics.labels` vaut `true` dans le projet.
 
+Toutefois, il est possible manuellement de supprimer puis attribuer à nouveau une étiquette `label1` donnée, par les quatre commandes suivantes :
 
 ```bash
 psql -d postgresql://... -c "DELETE FROM pdm_features_project_labels WHERE label='label1'"
@@ -181,16 +184,21 @@ psql -d postgresql://... -v features_table="pdm_features_project" -v labels_tabl
 
 La phase `update_projects` devra ensuite être réinitialisée à son tour pour prendre en compte les nouveaux dénombrements.
 
-#### Membres manquants
-Tel que décrit ci-dessus, Podoma exploite les diff quotidiens pour tenir les projets à jour. Ces diffs ne contiennent que les objets modifiés, si bien que lorsqu'un chemin ou une relation y figurent, nous n'y trouvons pas leurs membres.  
-Cela peut finalement poser des problèmes quand ces objets référencent des membres qui ne sont pas encore présents dans la base de données.
+#### Objets manquants
+Tel que décrit ci-dessus, Podoma exploite les diff quotidiens pour tenir les projets à jour.  
+Ces diffs ne contiennent que les objets modifiés, si bien que lorsqu'un chemin ou une relation y figurent, nous n'y trouvons pas leurs membres. Plus encore, ces diffs ne peuvent être filtrés que lorsque des noeuds sont présents dans la zone géographique voulue.
+Cela peut finalement poser des problèmes quand ces objets référencent des membres qui ne sont pas encore présents dans la base de données ou bien que seul un chemin ou qu'une relation a été modifiée sans qu'aucun noeud ne le soit.
 
 Podoma ne conservant pas d'autres objets que ceux nécessaires aux projets, il est nécessaire de vérifier à chaque mise à jour si des objets manquants doivent être récupérés.  
 Overpass API est utilisé pour les projets qui le nécessitent pour retrouver ces objets. Une requête est envoyée pour récupérer l'ensemble des noeuds, chemins et relations manquants ainsi que leurs déscendants pour tenir compte de la récursivité. Ainsi une requête portant sur 10 objets manquants pourra mener à une nombre de résultats plus important.
 
 Ces objets sont ensuite traités en même temps que ceux obtenus de l'analyse des diffs, ce processus complète les fichiers temporaires sans particularisme.
 
-Pour désactiver cette fonctionnalité, vous devez définir le paramètre `OVERPASS_URL` à null dans votre fichier de configuration.
+Pour désactiver cette fonctionnalité, vous devez définir le paramètre `OVERPASS_URL` à `null` dans votre fichier de configuration.  
+* Aucune configuration supplémentaire n'est nécessaire pour traiter les membres des chemins ou relations
+* `database.live` doit être à `true` pour permettre de rechercher des objets manquants depuis une table tenue à jour en live.
+
+Ces deux modes sont combinés. Une seule requête à Overpass ne sera envoyée à chaque tentative.
 
 #### Qualification des contributions
 Podoma met en place une qualificiation des contributions plus fine à partir des 3 catégories du format [OsmChange](https://wiki.openstreetmap.org/wiki/OsmChange) (add, modifiy, delete).  

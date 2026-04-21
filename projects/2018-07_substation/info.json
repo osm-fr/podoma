@@ -11,6 +11,7 @@
 	},
 	"database": {
 		"osmium_tag_filter": "nw/power=substation",
+		"live": true,
 		"imposm": {
 			"types": ["point", "polygon"],
 			"mapping": { "power": ["substation"] }

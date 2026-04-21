@@ -109,11 +109,13 @@ The properties in `info.json` are as follows:
 - `database.imposm`: configuration for importing updated OSM data (`types` for geometry types to be taken into account, `mapping` for attributes, see [the Imposm documentation](https://imposm.org/docs/imposm3/latest/mapping.html#tags) for the format of these fields)
 - `database.compare`: configuration for the search of OpenStreetMap objects to compare, follows the format of `database.imposm` with an additional property `radius` (reconciliation radius in meters)
 - `database.labels` : Labels definitions that are assigned to each feature version depending on their tags. Each label is associated to a JSON path used by [jsonb_path_exists](https://www.postgresql.org/docs/current/functions-json.html#FUNCTIONS-JSON-PROCESSING-TABLE) over each feature tags. Example `"labels":{"label1":"$ ? (@.substation==\"transmission\")"}` to assign `label1` to any object that holds `substation=transmission`. See below about filtering.
+- `database.live` : Enable computations that involve live table, populated by imposm or any other process (see replacing imposm below).
 - `datasources`: list of data sources that appear on the page (see below)
 - `teams` : list of teams used to build statistics and defined with their name corresponding to a OSM usernames table.
 - `statistics`: configuration of statistics display on the project page
 - `statistics.count`: enable projects features counting
 - `statistics.length` : enable length and surface measurement on projects features. Don't forget to reinit project to enforce any change.
+- `statistics.labels` : enable contribution classification in labels tables. As a consequence, it produces users contribution on labels too.
 - `statistics.feature_name`: name to display to the user for these objects
 - `statistics.osmose_tasks`: name of the tasks performed via Osmose
 - `statistics.points`: configuration of the points obtained when contributing to the project (in relation with `contribs.sql`). `{"add":1, "edit":2}`
@@ -171,25 +173,33 @@ The syntax that is used to define labels conforms to [Postgresql's SQL/JSON](htt
 ```
 
 Labels assignement is done during the `update_changes` phase. They could only be reseted by initialization to propagate a change on labels definition for instance. There is no particular logic to edit assigned labels.  
+Contribution classification is only done if `statistics.labels` is `true` for a given project.
+
 However, it is possible to manually delete and do the assignment of a particular label `label1` with the following commands:
 
 ```bash
 psql -d postgresql://... -c "DELETE FROM pdm_features_project_labels WHERE label='label1'"
 psql -d postgresql://... -v features_table="pdm_features_project" -v labels_table="pdm_features_project_labels" -v label="'label1'" -v labelfilter="'... new label filer ...'" -f "db/27_changes_labels.sql"
+psql -d postgresql://... -v features_table="pdm_features_project" -v labels_table="pdm_features_project_labels" -f "db/27_changes_labels_contrib.sql"
 ```
 
 Then, the `update_projects` should be inited again to propagate the new labels into counts and KPI.
 
-#### Missing members
-As explained upside, Podoma uses the daily diffs to keep projects updated. Those diffs files only contain modified features and even if a way or a relation may be included in it, none of their members will be mentioned is they hadn't been edited themselves.  
-It can finally causes issues when some unknown features in the database are referenced by ways or relations.
+#### Missing OpenStreetMap features
+As explained upside, Podoma uses the daily diffs to keep projects updated.  
+Those diffs files only contain modified features and even if a way or a relation may be included in it, none of their members will be mentioned is they hadn't been edited themselves. Moreover, those diffs can only be filtered when nodes are located inside the desired geographic area.  
+It can finally causes issues when some unknown features in the database are referenced by ways or relations or that only ways or relations were edited without touching nodes.
 
 Podoma only keeps track of useful features for projects, it needs to check after each update if unknown features should be retrieved.  
 Overpass API is used by projects which require to get such missing members. A single query is sent to retrieve all nodes, ways, relations and their descendents to take care of recursivity. Thus a query covering 10 missing features can lead to a greater amount of results.
 
 Those features are then processed the same way than the ones we got from daily diffs files. This process complete the temporary files without any particularism.
 
-To disable this retrieval, just set a null `OVERPASS_URL` in your Podoma configuration file.
+To disable this retrieval, just set a `null` in `OVERPASS_URL` in your Podoma configuration file.
+* No additional configuration is necessary to seek for missing ways or relation members
+* Put `database.live` to true in your project configuration to seek for missing features from live updated table.
+
+Those two modes are combined. All features are retreived through a single Overpass query at each attempt.
 
 #### Contributions taggings
 Podoma operates a more detailed tagging of contributions out of 3 [OsmChange](https://wiki.openstreetmap.org/wiki/OsmChange) categories (add, modifiy, delete).  

@@ -10,6 +10,7 @@
 	},
 	"database": {
 		"osmium_tag_filter": "nw/amenity=charging_station",
+		"live": true,
 		"imposm": {
 			"types": ["point", "polygon"],
 			"mapping": { "amenity": ["charging_station"] }
