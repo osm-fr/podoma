@@ -162,7 +162,7 @@ script.
 				addBlock(
 					"location-dot",
 					numberFormat.format(res.daily.count),
-					`#{__('%s in OSM on %s', title.toLowerCase(), "${(new Date(res.daily.ts)).toLocaleDateString()}")}`,
+					`#{__('%s in OSM on the last update', title.toLowerCase(), "${(new Date(res.daily.ts)).toLocaleDateString()}")}`,
 					null
 				);
 			}
