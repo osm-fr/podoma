@@ -129,9 +129,11 @@ script.
 				softEndDate = "#{soft_end_date || ''}",
 				softStartDateObj = new Date(softStartDate),
 				softEndDateObj = new Date(softEndDate),
-				useSoftDates = "#{CONFIG.USE_SOFT_DATES || ''}" === "true"  && !isNaN(softStartDateObj) && !isNaN(softEndDateObj);
+				useSoftDates = "#{CONFIG.USE_SOFT_DATES || ''}" === "true"  && !isNaN(softStartDateObj) && !isNaN(softEndDateObj),
+				isDailyDateToday = res.daily?.ts && (new Date().getTime() - new Date(res.daily.ts).getTime()) <= 24 * 60 * 60 * 1000;
 
 			if (useSoftDates && res.osm_counts?.length > 1) {
+				// Showing added element count between soft dates
 				const startIndex = res.osm_counts.findIndex(x => new Date(x.ts) >= softStartDateObj),
 					endIndex = res.osm_counts.findIndex(x => new Date(x.ts) >= softEndDateObj),
 					softStartItem = res.osm_counts[Math.max(0, startIndex)],
@@ -141,14 +143,15 @@ script.
 					"plus",
 					numberFormat.format(softEndItem.amount - softStartItem.amount),
 					`#{__('%s added (%s)', title.toLowerCase(), "${softDateRange}")}`,
-					{ "24h": res.daily.added - res.past.added }
+					isDailyDateToday ? { "24h": res.daily.added - res.past.added } : null
 				);
 			} else if (res.daily?.added) {
+				// Showing added element count in the whole project duration 
 				addBlock(
 					"plus",
 					numberFormat.format(res.daily.added),
 					`#{__('%s added since %s', title.toLowerCase(), "${(new Date(res.daily.ts_start)).toLocaleDateString()}")}`,
-					{"24h": res.daily.added - res.past.added}
+					isDailyDateToday ?  {"24h": res.daily.added - res.past.added } : null
 				);
 			}
 			if(res.current?.count) {
@@ -162,7 +165,7 @@ script.
 				addBlock(
 					"location-dot",
 					numberFormat.format(res.daily.count),
-					`#{__('%s in OSM on the last update', title.toLowerCase(), "${(new Date(res.daily.ts)).toLocaleDateString()}")}`,
+					`#{__('%s in OSM on the last update', title.toLowerCase())}`,
 					null
 				);
 			}
@@ -177,8 +180,8 @@ script.
 				addBlock(
 					"users",
 					numberFormat.format(res.daily.nbContributors),
-					`#{__('contributors since %s', "${(new Date(res.daily.ts_start)).toLocaleDateString()}")}`,
-					{ "24h": res.daily.nbContributors - res.past.nbContributors }
+					`#{__('contributors')} (${(new Intl.DateTimeFormat()).formatRange(new Date(res.daily.ts_start), new Date(res.daily.ts))})`,
+					isDailyDateToday ? { "24h": res.daily.nbContributors - res.past.nbContributors } : null
 				);
 			}
 			
