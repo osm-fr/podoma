@@ -684,9 +684,11 @@ npm run projects:update
 Il est possible de ne pas utiliser imposm3 et de se connecter à une base de données pourvue des données nécessaires.
 Il faudra s'assurer qu'elle est tenue à jour toutes les heures minimum pour les besoins de PdM.
 
-Optionellement, si le mode compare est activé dans un projet donné, une vue supplémentaire appelée `pdm_project_${project_id}_compare` conforme à ce qui doit être comparé est nécessaire. Elle a la même structure que ci-dessus.
+Une fois configuré, n'oubliez pas de définir `database.live` à `true` dans la configuration de votre projet.
 
 #### Généralités
+
+Toutes les géométries importées par imposm sont prévues pour être affichées sur des tuiles web, la projection EPSG:3857 est alors préférée. Ces géométries diffèrent de celles stockées pour le changelog, principalement destiné aux calculs sur les projets, ainsi en EPSG:4326.
 
 Il est nécessaire d'avoir une table `pdm_boundary` contenant le découpage administratif de la zone ([niveaux administratifs](https://wiki.openstreetmap.org/wiki/Tag:boundary%3Dadministrative) 2, 4, 6 et 8) et ayant cette structure :
 
@@ -704,7 +706,8 @@ La colonne `centre` est comprise comme étant un point compris dans le périmèt
 
 Créer des indexes sur les colonnes `osm_id`, `tags`, `geom` et `centre` peut être utile suivant la population d'objets touchée par un projet donné.
 
-PdM va automatiquement créer une table `pdm_boundary_subdivide` en utilisant [ST_Subdivide](https://postgis.net/docs/ST_Subdivide.html) pour faciliter le calcul d'intersection entre les objets du projet et le zonage administratif.
+PdM va automatiquement créer une table `pdm_boundary_subdivide` en utilisant [ST_Subdivide](https://postgis.net/docs/ST_Subdivide.html) pour faciliter le calcul d'intersection entre les objets du projet et le zonage administratif.  
+La seule transformation du système 3857 vers 4326 a lieu lors de la subdivision des périmètres administratifs, pour les comparer aux géométries du changelog pour les calculs localisés sur ces périmètres.
 
 Une fois mise à jour, pensez à propager les changements aux vues utilisants les périmètres administratifs :
 
@@ -720,8 +723,10 @@ osm_id varchar,
 gid bigint,
 name VARCHAR(255)
 tags json
-geom GEOMETRY
+geom GEOMETRY(Geometry, 3857)
 ```
+
+Optionellement, si le mode compare est activé dans un projet donné, une vue supplémentaire appelée `pdm_project_${project_id}_compare` conforme à ce qui doit être comparé est nécessaire. Elle a la même structure que ci-dessus.
 
 #### Remplacé par le journal des modifications
 Dans le cas où vous accepteriez une mise à jour quotidienne de la vue des objets actuels, c'est à dire sans prise en compte immédiate des objets contribués pendant la journée, il est possible de créer manuellement une vue matérialisée comme suit :
@@ -732,7 +737,7 @@ create materialized view pdm_project_projectslug as
   split_part(fc.osmid, '/', 2)::bigint as gid, 
   fc.tags->>'name' as name, 
   to_json(fc.tags) as tags, 
-  ST_Centroid(fc.geom)::geometry(point,4326) as geom 
+  ST_Transform(fc.geom, 3857) as geom,
   from pdm_features_projectslug_changes fc
   where fc.tagsfilter=true and (CURRENT_TIMESTAMP BETWEEN fc.ts_start AND fc.ts_end
         OR (CURRENT_TIMESTAMP > fc.ts_start AND fc.ts_end is null));
