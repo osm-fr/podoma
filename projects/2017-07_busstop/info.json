@@ -11,6 +11,7 @@
 	},
 	"database": {
 		"osmium_tag_filter": "n/highway=bus_stop",
+		"live": true,
 		"imposm": {
 			"types": ["point", "polygon"],
 			"mapping": {

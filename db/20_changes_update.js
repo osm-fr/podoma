@@ -33,6 +33,8 @@ function macroChangesCsv (mode, project, oplProject, csvFeatures, csvUsers, csvM
     const changes_table = `pdm_features_${slug}_changes`;
     const boundary_table = `pdm_features_${slug}_boundary`;
     const labels_table = `pdm_features_${slug}_labels`;
+    const live_table = `pdm_project_${slug}`;
+    const live_enabled = project.database.hasOwnProperty("live") && project.database.live == true;
     let script = ``;
 
     let awk_param_members = "";
@@ -100,30 +102,48 @@ function macroChangesCsv (mode, project, oplProject, csvFeatures, csvUsers, csvM
             ${PSQL} -c "\\COPY ${members_table}_tmp (memberid, osmid, version, pos, role) FROM '${csvMembers}' CSV"
             rm -f "${csvMembers}"
             `
-            if (CONFIG.hasOwnProperty("OVERPASS_URL") && CONFIG.OVERPASS_URL != null){
+        }
+
+        if (CONFIG.hasOwnProperty("OVERPASS_URL") && CONFIG.OVERPASS_URL != null && (csvMembers != null || live_enabled)){
+            script += `
+            rm -f "${CONFIG.WORK_DIR}/missing_osm.xml" "${CONFIG.WORK_DIR}/missing_osm.overpass" "${CONFIG.WORK_DIR}/missing_osm.opl" "${CONFIG.WORK_DIR}/missing_osm.csv"
+            `
+            if (csvMembers != null && !live_enabled){
                 script += `
                 echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Fetching missing members"
-                rm -f "${CONFIG.WORK_DIR}/missing_osm.xml" "${CONFIG.WORK_DIR}/missing_osm.overpass" "${CONFIG.WORK_DIR}/missing_osm.opl" "${CONFIG.WORK_DIR}/missing_osm.csv"
-                missing_members=\$(${PSQL} -qtAf "${__dirname}/25_changes_members_missing.sql" -v members_table="${members_table}_tmp" -v features_table="${features_table}" -v features_table_update="${update_table}" )
-                read -d "|" -a missing_members_qry_res <<< \$missing_members
+                missing_features=\$(${PSQL} -qtAf "${__dirname}/25_changes_missing_members.sql" -v members_table="${members_table}_tmp" -v features_table="${features_table}" -v features_table_update="${update_table}" )`
+            }else if (csvMembers == null && live_enabled){
+                script += `
+                echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Fetching missing features from live"
+                missing_features=\$(${PSQL} -qtAf "${__dirname}/25_changes_missing_live.sql" -v live_table="${live_table}" -v features_table="${features_table}" -v features_table_update="${update_table}" )`
+            }else{
+                script += `
+                echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Fetching missing members and live features"
+                missing_features=\$(${PSQL} -qtAf "${__dirname}/25_changes_missing_live_members.sql" -v members_table="${members_table}_tmp" -v live_table="${live_table}" -v features_table="${features_table}" -v features_table_update="${update_table}" )`
+            }
+            script += `
+            if [[ "\$missing_features" != "||" ]]; then
+                IFS='|' read -ra missing_features_qry_res <<< \$missing_features
+                echo "data=(\${missing_features_qry_res[0]} \${missing_features_qry_res[1]} \${missing_features_qry_res[2]}); (._;>>;); out meta;" > ${CONFIG.WORK_DIR}/missing_osm.overpass
 
-                echo "data=(\${missing_members_qry_res[0]} \${missing_members_qry_res[1]} \${missing_members_qry_res[2]}); (._;>>;); out meta;" > ${CONFIG.WORK_DIR}/missing_osm.overpass
-
-                curl -d @${CONFIG.WORK_DIR}/missing_osm.overpass --retry 5 --retry-max-time 120 -o "${CONFIG.WORK_DIR}/missing_osm.xml" -X POST ${CONFIG.OVERPASS_URL}
-                if [ -f "${CONFIG.WORK_DIR}/missing_osm.xml" ]; then
+                curl -d @${CONFIG.WORK_DIR}/missing_osm.overpass --retry 10 --retry-max-time 250 -f -o "${CONFIG.WORK_DIR}/missing_osm.xml" -X POST ${CONFIG.OVERPASS_URL}
+                if [[ -f "${CONFIG.WORK_DIR}/missing_osm.xml" ]]; then
                     osmium cat -f opl -o "${CONFIG.WORK_DIR}/missing_osm.opl" "${CONFIG.WORK_DIR}/missing_osm.xml"
                     echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] \$(wc -l ${CONFIG.WORK_DIR}/missing_osm.opl | mawk '{print $1}') features has been retrieved from overpass"
                     mawk -f ${OPL2FTS_FS} -v tagfilter="${project.database.osmium_tag_filter}" -v output_main="${CONFIG.WORK_DIR}/missing_osm.csv" -v output_users="${csvUsers}" ${awk_param_members} "${CONFIG.WORK_DIR}/missing_osm.opl"
 
                     ${PSQL} -c "\\COPY ${update_table} (osmid, version, changeset, action, contrib, ts, userid, tags, geom, tagsfilter) FROM '${CONFIG.WORK_DIR}/missing_osm.csv' CSV"
-                    ${PSQL} -c "\\COPY ${members_table}_tmp (memberid, osmid, version, pos, role) FROM '${csvMembers}' CSV"
                 else
                     echo "ERROR possible missing members with unreachable Overpass API"
                 fi
                 rm -f "${CONFIG.WORK_DIR}/missing_osm.xml" "${CONFIG.WORK_DIR}/missing_osm.overpass" "${CONFIG.WORK_DIR}/missing_osm.opl" "${CONFIG.WORK_DIR}/missing_osm.csv"
-                `
-            }
+            else
+                echo "No missing features found"
+            fi
+            `
+        }
 
+        if (csvMembers != null){
             script += `
             ${PSQL} -v members_table="${members_table}" -v members_table_tmp="${members_table}_tmp" -f "${__dirname}/25_changes_members.sql"
             ${PSQL} -c "DROP TABLE ${members_table}_tmp"
@@ -498,7 +518,7 @@ fi
 
 echo "== Look for earliest date to process"
 IFS='|'
-process_data=\$(${PSQL} -qtAc "with update_days as (select project, COALESCE(changes_lastupdate_date, start_date) as start_date, CURRENT_TIMESTAMP as end_date, extract (day from (CURRENT_TIMESTAMP - COALESCE(changes_lastupdate_date, start_date))) as days from pdm_projects) select to_char(MIN(start_date),'YYYY-MM-DD\\"T\\"HH24:MI:SS\\"Z\\"') as start_date, to_char(MAX(end_date),'YYYY-MM-DD\\"T\\"HH24:MI:SS\\"Z\\"') as end_date, extract (day from (MAX(end_date) - MIN(start_date))) as delta from update_days where days between 0 and 30;")
+process_data=\$(${PSQL} -qtAc "with update_days as (select project, COALESCE(changes_lastupdate_date, start_date) as start_date, CURRENT_TIMESTAMP as end_date, extract (day from (CURRENT_TIMESTAMP - COALESCE(changes_lastupdate_date, start_date))) as days from pdm_projects where project_id IN (${Object.values(projects).map(project => project.id).join()})) select to_char(MIN(start_date),'YYYY-MM-DD\\"T\\"HH24:MI:SS\\"Z\\"') as start_date, to_char(MAX(end_date),'YYYY-MM-DD\\"T\\"HH24:MI:SS\\"Z\\"') as end_date, extract (day from (MAX(end_date) - MIN(start_date))) as delta from update_days where days between 0 and 30;")
 read -r -a process_qry <<< \$process_data
 process_start_ts=\${process_qry[0]}
 process_start_time=\$(date -d "\$process_start_ts" +%s)

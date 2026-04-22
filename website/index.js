@@ -590,18 +590,21 @@ app.get("/projects/:name/stats", (req, res) => {
           };
         }),
     );
-
-    allPromises.push(
-      pool
-        .query(
-          `SELECT COUNT(*) AS amount FROM pdm_project_${p.name.split("_").pop()}`,
-        )
-        .then((results) => ({
-          "current":{
-            "count": results.rows.length > 0 && parseInt(results.rows[0].amount)
-          }
-        })),
-    );
+    
+    // Current time point is only available if a live table is maintained
+    if (p.database.live){
+      allPromises.push(
+        pool
+          .query(
+            `SELECT COUNT(*) AS amount FROM pdm_project_${p.name.split("_").pop()}`,
+          )
+          .then((results) => ({
+            "current":{
+              "count": results.rows.length > 0 && parseInt(results.rows[0].amount)
+            }
+          })),
+      );
+    }
 
     if (p.datasources.find((ds) => ds.source === "stats")) {
       allPromises.push(

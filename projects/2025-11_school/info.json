@@ -11,6 +11,7 @@
 	},
 	"database": {
 		"osmium_tag_filter": "nwr/amenity=school",
+		"live": true,
 		"imposm": {
 			"types": ["point", "polygon"],
 			"mapping": { "amenity": ["school"] }

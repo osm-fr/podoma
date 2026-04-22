@@ -11,6 +11,7 @@
 	},
 	"database": {
 		"osmium_tag_filter": "nwr/amenity=police",
+		"live": true,
 		"imposm": {
 			"types": ["point", "polygon"],
 			"mapping": { "amenity": ["police"] }

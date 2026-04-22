@@ -10,6 +10,7 @@
 	},
 	"database": {
 		"osmium_tag_filter": "nw/healthcare=laboratory",
+		"live": true,
 		"imposm": {
 			"types": ["point", "polygon"],
 			"mapping": { "healthcare": ["laboratory"] }
