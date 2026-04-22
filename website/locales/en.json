@@ -144,6 +144,7 @@
 	"%s added since %s": "%s added since %s",
 	"%s added (%s)": "%s added (%s)",
 	"%s currently in OSM": "%s currently in OSM",
+	"%s in OSM on %s": "%s in OSM on %s",
 	"Thank you!": "Thank you!",
 	"Thank you all!": "Thank you all!",
 	"Thanks to all the contributors for making this project a success. Without all of you, OpenStreetMap would be nothing!": "Thanks to all the contributors for making this project a success. Without all of you, OpenStreetMap would be nothing!",

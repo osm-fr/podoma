@@ -136,16 +136,12 @@ script.
 					endIndex = res.osm_counts.findIndex(x => new Date(x.ts) >= softEndDateObj),
 					softStartItem = res.osm_counts[Math.max(0, startIndex)],
 					softEndItem = res.osm_counts[endIndex >= 0 ? endIndex : res.osm_counts.length - 1],
-					softDateRange = new Intl.DateTimeFormat().formatRange(new Date(softStartItem.ts), new Date(softEndItem.ts)),
-					sinceBeginning = `#{__('since %s', "${(new Date(res.daily.ts_start)).toLocaleDateString()}")}`;
+					softDateRange = new Intl.DateTimeFormat().formatRange(new Date(softStartItem.ts), new Date(softEndItem.ts));
 				addBlock(
 					"plus",
 					numberFormat.format(softEndItem.amount - softStartItem.amount),
 					`#{__('%s added (%s)', title.toLowerCase(), "${softDateRange}")}`,
-					{
-						"24h": res.daily.added - res.past.added,
-						[sinceBeginning]: res.daily.added
-					}
+					{ "24h": res.daily.added - res.past.added }
 				);
 			} else if (res.daily?.added) {
 				addBlock(
@@ -161,6 +157,13 @@ script.
 					numberFormat.format(res.current.count),
 					"#{__('%s currently in OSM', title.toLowerCase())}",
 					res.daily?.count ? {"live": res.current.count - res.daily.count} : null
+				);
+			} else if (res.daily?.count) {
+				addBlock(
+					"location-dot",
+					numberFormat.format(res.daily.count),
+					`#{__('%s in OSM on %s', title.toLowerCase(), "${(new Date(res.daily.ts)).toLocaleDateString()}")}`,
+					null
 				);
 			}
 			if(res.tasksSolved !== undefined) {
