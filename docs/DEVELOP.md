@@ -686,10 +686,14 @@ npm run projects:update
 
 ### Disable imposm3 usage
 
-Is it possible to not use imposm3 and provide an updated database with all necessary data.  
-You must ensure yourself it will be updated at the necessary pace for PdM need, at least daily.
+Is it possible to not use imposm3 and provide a live updated database with all necessary data.  
+You must ensure yourself it will be updated at the necessary pace for PdM need, with minute diffs.
+
+Once setup, don't forget to set `database.live` to `true` in your project(s) configuration.
 
 #### Common principles
+
+All geometries imported by imposm are intended to be displayed in web tiles, so prefer using the EPSG:3857 projection. They differ from the ones stored in the changelog, mainly intended for project computations, thus with EPSG:4326.
 
 A table `pdm_boundary` with every administrative boundaries will be useful to aggregate statistics at several levels. [Administrative boundaries](https://wiki.openstreetmap.org/wiki/Tag:boundary%3Dadministrative) 2, 4, 6 and 8 are supported by web interface.  
 It should conform to this structure:
@@ -707,7 +711,8 @@ centre GEOMETRY(Point, 3857)
 `centre` column contains a point that must be inside the boundary perimeter (please use [ST_PointOnSurface](https://postgis.net/docs/ST_PointOnSurface.html) function).  
 Indices should be created on columns `osm_id`, `tags`, `geom` and `centre` depending on the amount of boundaries covering each project.
 
-Processing will automatically derivate another table `pdm_boundary_subdivide` by using [ST_Subdivide](https://postgis.net/docs/ST_Subdivide.html) as to significantly ease the intersecting computation between features and boundaries.
+Processing will automatically derivate another table `pdm_boundary_subdivide` by using [ST_Subdivide](https://postgis.net/docs/ST_Subdivide.html) as to significantly ease the intersecting computation between features and boundaries.  
+The only transformation from 3857 to 4326 is done on boundaries subdivide, since they are compared to changelog geometries for boundaries counts.
 
 Once updated, use the following to propagate the changes you have made to the boundaries:
 
@@ -723,7 +728,7 @@ osm_id varchar,
 gid bigint,
 name VARCHAR(255)
 tags json
-geom GEOMETRY
+geom GEOMETRY(Geometry, 3857)
 ```
 
 Optionally, if the compare mode is enabled for a given project, a supplemntary view called `pdm_project_${project_id}_compare` that conforms to the given structure for `pdm_project_${project_id}` is needed.
@@ -737,7 +742,7 @@ create materialized view pdm_project_projectslug as
   split_part(fc.osmid, '/', 2)::bigint as gid, 
   fc.tags->>'name' as name, 
   to_json(fc.tags) as tags, 
-  fc.geom 
+  ST_Transform(fc.geom, 3857) as geom,
   from pdm_features_projectslug_changes fc
   where fc.tagsfilter=true and (CURRENT_TIMESTAMP BETWEEN fc.ts_start AND fc.ts_end
         OR (CURRENT_TIMESTAMP > fc.ts_start AND fc.ts_end is null));
