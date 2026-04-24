@@ -528,17 +528,17 @@ if (( \$process_delta < 1 )); then
 else
     echo "Start processing from: \$process_start_ts to \$process_end_ts"
 
-    changes_src="${OSC_UPDATES_FS}"
+    worlddiff_osc="${OSC_UPDATES_FS}"
     changes_start=\$(date -d "$process_start_ts" +"%Y%m%d")
     changes_end=\$(date -d "$process_end_ts" +"%Y%m%d")
-    changes_osc="\${changes_src/.osc.gz/".time-\$changes_start-\$changes_end.osc.gz"}"
-    changes_oscts="\${changes_src/.osc.gz/".time-\$changes_start-\$changes_end.osc.ts"}"
+    changes_osc="\${worlddiff_osc/.osc.gz/".time-\$changes_start-\$changes_end.osc.gz"}"
+    changes_oscts="\${worlddiff_osc/.osc.gz/".time-\$changes_start-\$changes_end.osc.ts"}"
     if [[ ! -f \$changes_osc ]]; then
         echo "== Build OSC changes with replication files"
-        osmupdate --keep-tempfiles --day -t="${CONFIG.WORK_DIR}/osmupdate/" -v \$process_start_ts "\$changes_src"
+        osmupdate --keep-tempfiles --day -t="${CONFIG.WORK_DIR}/osmupdate/" -v \$process_start_ts "\$worlddiff_osc"
 
         echo "== Read OSC file information..."
-        osc_ts=\$(osmium fileinfo -e -g data.timestamp.last "\$changes_src")
+        osc_ts=\$(osmium fileinfo -e -g data.timestamp.last "\$worlddiff_osc")
         echo \$osc_ts > "\$changes_oscts"
         osc_time=\$(date -d "\$osc_ts" +%s)
         echo "OSC file is up to \$osc_ts"
@@ -548,17 +548,16 @@ else
             script += `
         if [ -f ${POLY_FS} ]; then
             echo "== Extract data in polygon..."
-            osmium extract -p "${POLY_FS}" --with-history -s complete_ways "\$changes_src" -O -o "\$changes_osc"
-            rm -f \$changes_src
+            osmium extract -p "${POLY_FS}" --with-history -s complete_ways "\$worlddiff_osc" -O -o "\$changes_osc"
         else
             echo "== No polygon data to restrict on"
-            mv \$changes_src \$changes_osc
+            cp \$worlddiff_osc \$changes_osc
         fi
         `;
     }else{
             script += `
         echo "== No polygon data to restrict on"
-        mv \$changes_src \$changes_osc
+        cp \$worlddiff_osc \$changes_osc
         `;
     }
 
@@ -659,7 +658,7 @@ Object.values(projects).forEach(project => {
             rm -f "${oplProject}"
             if [[ \$knownfeatures > 0 ]] || [[ \$createdFeatures > 0 ]]; then
                 rm -f "${oscProjectIds}"
-                osmium getid ${getIdOptions} -i "${listKnownIds}" -i "${listCreatedIds}" "\$projectChanges_osc" -o "${oscProjectIds}"
+                osmium getid ${getIdOptions} -i "${listKnownIds}" -i "${listCreatedIds}" "\$worlddiff_osc" -o "${oscProjectIds}"
 
                 echo "   => [\$((\$(date -d now +%s) - \$process_start_t0))s] Merging changes in one file"
                 osmium merge ${oscProjectTags} ${oscProjectIds} -f opl,history=true -o "${oplProject}"
