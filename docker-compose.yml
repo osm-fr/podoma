@@ -24,7 +24,9 @@ services:
       context: .
     restart: always
     depends_on:
-      - pgsqldb
+      pgsqldb:
+        condition: service_healthy
+        restart: true
     networks:
       - oim-internal
     ports:
@@ -40,7 +42,9 @@ services:
     image: pramsey/pg_tileserv:latest
     restart: always
     depends_on:
-      - pgsqldb
+      pgsqldb:
+        condition: service_healthy
+        restart: true
     networks:
       - oim-internal
     ports:
@@ -54,7 +58,9 @@ services:
     profiles:
       - pgadmin
     depends_on:
-      - pgsqldb
+      pgsqldb:
+        condition: service_healthy
+        restart: true
     networks:
       - oim-internal
     ports:

@@ -179,7 +179,7 @@ if [ "$mode" == "init" ]; then
 	mkdir -p "${IMPOSM_CACHE_DIR}"
 	imposm import -mapping "${IMPOSM_YML_FS}" \\
 		-read "${OSM_PBF_FS}" \\
-		-srid EPSG:3857 \\
+		-srid 3857 \\
 		-overwritecache -cachedir "${IMPOSM_CACHE_DIR}" \\
 		-diff -diffdir "${IMPOSM_DIFF_DIR}"
 
