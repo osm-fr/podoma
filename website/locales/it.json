@@ -36,7 +36,7 @@
 	"Total": "Totale",
 	"Country": "Nazione",
 	"Region": "Regione",
-	"Department": "Provincia",
+	"Depart.": "Provincia",
 	"City": "Città",
 	"Find all data directly on OpenStreetMap website.": "Trova tutti i dati direttamente sul sito di OpenStreetMap.",
 	"Other projects": "Altri progetti",
@@ -140,8 +140,10 @@
 	"Discuss": "Discussione",
 	"Count in OSM": "Conteggio in OSM",
 	"Number of objects per key": "Numero di oggetti per chiave",
-	"%s added since %s": "%s aggiunti da allora %s",
-	"%s currently in OSM": "%s attualmente in OSM",
+	"%s added since %s": "%s aggiunti dal %s",
+	"%s added (%s)": "%s aggiunti (%s)",
+	"%s currently in OSM": "%s attualmente su OSM",
+	"%s in OSM on the last update": "%s su OSM all'ultimo aggiornamento",
 	"Thank you!": "Grazie!",
 	"Thank you all!": "Grazie a tutti!",
 	"Thanks to all the contributors for making this project a success. Without all of you, OpenStreetMap would be nothing!": "Grazie a tutti i contributori per aver reso questo progetto un successo! Senza di voi OpenStreetMap non sarebbe quello che è!",
@@ -161,5 +163,6 @@
 	"42+ points": "42+ punti",
 	"70+ points": "70+ punti",
 	"100+ points": "100+ punti",
-	"500+ points": "500+ punti"
+	"500+ points": "500+ punti",
+	"Top contributor": "N°1 dei contributi"
 }

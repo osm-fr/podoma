@@ -332,24 +332,27 @@ app.get("/projects/:name", (req, res) => {
     .concat(all.current.filter((p) => p.name !== req.params.name));
   const isActive =
     all.current.length > 0 &&
-    all.current.find((p) => p.name === req.params.name) !== undefined;
+    all.current.some((p) => p.name === req.params.name);
   const isNext =
-    all.next && all.next.find((p) => p.name === req.params.name) !== undefined;
-  const isHardEnded = all.past.find(p => (
+    all.next && all.next.some((p) => p.name === req.params.name);
+  const isHardEnded = all.past.some(p => (
     p.id === req.params.id
     && p.end_date != null
     && new Date(p.end_date + "T23:59:59Z").getTime() < Date.now()
-  )) !== undefined;
+  ));
   
+  const RECENT_PAST_DAYS = 30,
+    recentPastThreshold = Date.now() - RECENT_PAST_DAYS * 24 * 60 * 60 * 1000;
   const isRecentPast =
     all.past &&
     all.past.length > 0 &&
-    all.past.find(
-      (p) =>
-        p.name === req.params.name && p.end_date != null && 
-        new Date(p.end_date + "T23:59:59Z").getTime() >=
-          Date.now() - 30 * 24 * 60 * 60 * 1000,
-    ) !== undefined;
+    all.past.some((p) =>{
+      const endDate = CONFIG.USE_SOFT_DATES && p.soft_end_date || p.end_date;
+      return p.name === req.params.name && 
+        endDate != null && 
+        new Date(endDate + "T23:59:59Z").getTime() >= recentPastThreshold;
+    });
+  
   res.render(
     "pages/project",
     Object.assign(
@@ -433,9 +436,10 @@ app.get("/projects/:name/stats", (req, res) => {
   const osmUserAuthentified =
     typeof req.query.osm_user === "string" &&
     req.query.osm_user.trim().length > 0;
+  const startDate = CONFIG.USE_SOFT_DATES && p.soft_start_date || p.start_date;
   const daysToKeep = (day) => {
     if (
-      Date.now() - new Date(p.start_date).getTime() <
+      Date.now() - new Date(startDate).getTime() <
       1000 * 60 * 60 * 24 * 60
     ) {
       return true;
@@ -455,7 +459,7 @@ app.get("/projects/:name/stats", (req, res) => {
           const params = {
             item: ds.item,
             class: ds.class,
-            start_date: p.start_date,
+            start_date: startDate,
             country: ds.country,
           };
           return fetch(
@@ -565,39 +569,26 @@ app.get("/projects/:name/stats", (req, res) => {
         `,
         [p.id]
         )
-        .then((results) => ({
-          chart: [
-            {
-              label: res.__("Count in OSM"),
-              data: results.rows.map((r) => ({ x: r.ts, y: r.amount })),
-              fill: false,
-              borderColor: "#388E3C",
-              lineTension: 0,
+        .then((results) => {
+          const firstItem = results.rows[0],
+            lastItem = results.rows.length > 0 ? results.rows[results.rows.length - 1] : null,
+            secondLastItem = results.rows.length > 1 ? results.rows[results.rows.length - 2] : null;
+          return {
+            osm_counts: results.rows,
+            "daily":{
+              "ts": lastItem?.ts,
+              "ts_start": firstItem?.ts,
+              "count": lastItem?.amount,
+              "added": firstItem && lastItem && lastItem.amount - firstItem.amount
             },
-          ],
-          "daily":{
-            "ts": results.rows.length > 0 &&
-              results.rows[results.rows.length - 1].ts,
-            "ts_start": results.rows[0].ts,
-            "count":results.rows.length > 0 &&
-              results.rows[results.rows.length - 1].amount,
-            "added":
-              results.rows.length > 0 &&
-              results.rows[results.rows.length - 1].amount -
-                results.rows[0].amount
-          },
-          "past": {
-            "ts": results.rows.length > 1 &&
-              results.rows[results.rows.length - 1].ts,
-            "ts_start": results.rows[0].ts,
-            "count": results.rows.length > 1 &&
-              results.rows[results.rows.length - 2].amount,
-            "added":
-              results.rows.length > 1 &&
-              results.rows[results.rows.length - 2].amount -
-                results.rows[0].amount
-          }
-        })),
+            "past": {
+              "ts": secondLastItem?.ts,
+              "ts_start": firstItem?.ts,
+              "count": secondLastItem?.amount,
+              "added": firstItem && secondLastItem && secondLastItem.amount - firstItem.amount
+            }
+          };
+        }),
     );
     
     // Current time point is only available if a live table is maintained
@@ -1120,6 +1111,9 @@ const authorized = {
   },
   "chartjs-adapter-moment": {
     "chartjs-adapter-moment.js": "dist/chartjs-adapter-moment.min.js",
+  },
+  "chartjs-plugin-annotation": {
+    "annotation.js": "dist/chartjs-plugin-annotation.min.js",
   },
   "maplibre-gl": {
     "maplibre-gl.js": "dist/maplibre-gl.js",

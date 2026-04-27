@@ -141,7 +141,9 @@
 	"Count in OSM": "Count in OSM",
 	"Number of objects per key": "Number of objects per key",
 	"%s added since %s": "%s added since %s",
+	"%s added (%s)": "%s added (%s)",
 	"%s currently in OSM": "%s currently in OSM",
+	"%s in OSM on the last update": "%s in OSM on the last update",
 	"Thank you!": "Thank you!",
 	"Thank you all!": "Thank you all!",
 	"Thanks to all the contributors for making this project a success. Without all of you, OpenStreetMap would be nothing!": "Thanks to all the contributors for making this project a success. Without all of you, OpenStreetMap would be nothing!",
@@ -149,5 +151,6 @@
 	"Participated": "Participated",
 	"They have participated to the project": "They have participated to the project",
 	"Always present": "Always present",
-	"They have participated to all the projects": "They have participated to all the projects"
+	"They have participated to all the projects": "They have participated to all the projects",
+	"Top contributor": "Top contributor"
 }

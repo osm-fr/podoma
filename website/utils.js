@@ -50,16 +50,21 @@ exports.foldProjects = (projects) => {
 	const prjs = { past: [], current: [], next: [] };
 	Object.values(projects).forEach(project => {
 		const slug = project.name.split("_").pop();
+
+		// When USE_SOFT_DATES is enabled, prefer soft dates over hard dates
+		const startDate = (CONFIG.USE_SOFT_DATES && project.soft_start_date) || project.start_date;
+		const endDate = (CONFIG.USE_SOFT_DATES && project.soft_end_date) || project.end_date;
+
 		// Check dates
-		if(new Date(project.start_date).getTime() <= Date.now() && ((project.end_date == null && project.soft_end_date == null) || Date.now() <= new Date(project.end_date+"T23:59:59Z").getTime() || Date.now() <= new Date(project.soft_end_date+"T23:59:59Z").getTime())) {
+		if(new Date(startDate).getTime() <= Date.now() && ((endDate == null && project.soft_end_date == null) || Date.now() <= new Date(endDate+"T23:59:59Z").getTime() || Date.now() <= new Date(project.soft_end_date+"T23:59:59Z").getTime())) {
 			prjs.current.push(project);
 		}
-		else if(Date.now() <= new Date(project.start_date).getTime()) {
+		else if(Date.now() <= new Date(startDate).getTime()) {
 			prjs.next.push(project);
 		}
 		else if(
-			(project.end_date != null && new Date(project.end_date+"T23:59:59Z").getTime() < Date.now())
-			|| (project.end_date == null && project.soft_end_date != null && new Date(project.soft_end_date+"T23:59:59Z").getTime() < Date.now())
+			(endDate != null && new Date(endDate+"T23:59:59Z").getTime() < Date.now())
+			|| (endDate == null && project.soft_end_date != null && new Date(project.soft_end_date+"T23:59:59Z").getTime() < Date.now())
 		) {
 			prjs.past.push({
 				id: project.id,

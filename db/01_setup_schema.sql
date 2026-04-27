@@ -303,7 +303,7 @@ BEGIN
 		LIMIT 1;
 
 		id := 'best_contributor';
-		name := 'N°1 des contributions';
+		name := 'Top contributor';
 		acquired := result_userid = the_userid;
 
 		IF acquired THEN
