@@ -452,8 +452,6 @@ Object.values(projects).forEach(project => {
 
     if [[ \$current_time < \$process_start_time ]]; then
         echo "Project ${project.name} begins in future and can't be inited"
-    elif [[ \$osh_time < \$process_start_time ]]; then
-            echo "Project ${project.name} begins after OSH time and can't be inited"
     elif [[ ! -z \$project_lastupdate_ts ]]; then
         echo "Project ${project.name} is already inited up to \$project_lastupdate_ts. Remove changes_lastupdate_date and rerun."
     else
@@ -462,28 +460,33 @@ Object.values(projects).forEach(project => {
             process_end_ts=\$(date -d "@\$project_end_time" +"%Y-%m-%dT00:00:00Z")
         fi
 
-        history_src="${OSH_PBF_FS}"
-        history_start=\$(date -d "$process_start_ts" +"%Y%m%d")
-        history_end=\$(date -d "$process_end_ts" +"%Y%m%d")
-        history_osh="\${history_src/.osh/".time-\$history_start-\$history_end.osh"}"
-        if [[ ! -f "\$history_osh" ]]; then
-            echo "   => [\$((\$(date -d now +%s) - \$process_start_t0))s] Extract history between \$process_start_ts and \$process_end_ts"
-            osmium time-filter "\$history_src" \$process_start_ts \$process_end_ts -o "\$history_osh"
+        if [[ \$osh_time < \$process_start_time ]]; then
+            echo "   => [\$((\$(date -d now +%s) - \$process_start_t0))s] OSH ends before project start; init with empty tables"
+            : > "${oplProject}"
+            process_end_ts=\$process_start_ts
         else
-            echo "   => [\$((\$(date -d now +%s) - \$process_start_t0))s] Reuse existing history between \$process_start_ts and \$process_end_ts"
-        fi
+            history_src="${OSH_PBF_FS}"
+            history_start=\$(date -d "\$process_start_ts" +"%Y%m%d")
+            history_end=\$(date -d "\$process_end_ts" +"%Y%m%d")
+            history_osh="\${history_src/.osh/".time-\$history_start-\$history_end.osh"}"
+            if [[ ! -f "\$history_osh" ]]; then
+                echo "   => [\$((\$(date -d now +%s) - \$process_start_t0))s] Extract history between \$process_start_ts and \$process_end_ts"
+                osmium time-filter "\$history_src" \$process_start_ts \$process_end_ts -o "\$history_osh"
+            else
+                echo "   => [\$((\$(date -d now +%s) - \$process_start_t0))s] Reuse existing history between \$process_start_ts and \$process_end_ts"
+            fi
 
         `;
         let oshProjectTime = "\$history_osh";
         let getIdOptions = "-H";
         tagFilterParts.forEach(tagFilter => {
             script += `
-        echo "   => [\$((\$(date -d now +%s) - \$process_start_t0))s] Extract features from OSH (${tagFilter})"
-        rm -f "${oshProjectInterm}"
-        osmium tags-filter "${oshProjectTime}" -R ${tagFilter} -o "${oshProjectInterm}"
-        rm -f "${oshProjectTags}"
-        mv "${oshProjectInterm}" "${oshProjectTags}"
-        `;
+            echo "   => [\$((\$(date -d now +%s) - \$process_start_t0))s] Extract features from OSH (${tagFilter})"
+            rm -f "${oshProjectInterm}"
+            osmium tags-filter "${oshProjectTime}" -R ${tagFilter} -o "${oshProjectInterm}"
+            rm -f "${oshProjectTags}"
+            mv "${oshProjectInterm}" "${oshProjectTags}"
+            `;
             oshProjectTime = oshProjectTags;
         });
 
@@ -494,12 +497,13 @@ Object.values(projects).forEach(project => {
         }
 
         script += `
-        echo "   => [\$((\$(date -d now +%s) - \$process_start_t0))s] Seek for all changes related to selected features and convert to OPL"
-        rm -f "${oplProject}"
-        osmium getid ${getIdOptions} "\$history_osh" -I "${oshProjectTags}" -f opl,history=true -o "${oplProject}"
-        rm -f "${csvFeatures}" "${csvMembers}" "${oshProjectTags}"
+            echo "   => [\$((\$(date -d now +%s) - \$process_start_t0))s] Seek for all changes related to selected features and convert to OPL"
+            rm -f "${oplProject}"
+            osmium getid ${getIdOptions} "\$history_osh" -I "${oshProjectTags}" -f opl,history=true -o "${oplProject}"
+            rm -f "${csvFeatures}" "${csvMembers}" "${oshProjectTags}"
+        fi
 
-        ${macroChangesCsv ("init", project, oplProject, csvFeatures, csvUsers, csvMembers, "\$process_start_ts", "\$process_end_tss")}
+        ${macroChangesCsv ("init", project, oplProject, csvFeatures, csvUsers, csvMembers, "\$process_start_ts", "\$process_end_ts")}
 
         ${PSQL} -c "UPDATE pdm_projects SET changes_lastupdate_date='\${process_end_ts}', counts_lastupdate_date=NULL WHERE project_id=${project.id}"
         echo "== [\$((\$(date -d now +%s) - \$process_start_t0))s] Project ${project.name} initied. Errors may have occured upside."
