@@ -452,6 +452,8 @@ Object.values(projects).forEach(project => {
 
     if [[ \$current_time < \$process_start_time ]]; then
         echo "Project ${project.name} begins in future and can't be inited"
+    elif [[ \$osh_time < \$process_start_time ]]; then
+            echo "Project ${project.name} begins after OSH time and can't be inited"
     elif [[ ! -z \$project_lastupdate_ts ]]; then
         echo "Project ${project.name} is already inited up to \$project_lastupdate_ts. Remove changes_lastupdate_date and rerun."
     else
