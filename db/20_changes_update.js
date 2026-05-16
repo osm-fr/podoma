@@ -126,7 +126,7 @@ function macroChangesCsv (mode, project, oplProject, csvFeatures, csvUsers, csvM
                 IFS='|' read -ra missing_features_qry_res <<< \$missing_features
                 echo "data=(\${missing_features_qry_res[0]} \${missing_features_qry_res[1]} \${missing_features_qry_res[2]}); (._;>>;); out meta;" > ${CONFIG.WORK_DIR}/missing_osm.overpass
 
-                curl -d @${CONFIG.WORK_DIR}/missing_osm.overpass --retry 10 --retry-max-time 250 -f -o "${CONFIG.WORK_DIR}/missing_osm.xml" -X POST ${CONFIG.OVERPASS_URL}
+                curl -d @${CONFIG.WORK_DIR}/missing_osm.overpass --retry 10 --retry-max-time 250 -f -o "${CONFIG.WORK_DIR}/missing_osm.xml" -A "Podoma/1.0 (${CONFIG.WEBSITE_URL})" -X POST ${CONFIG.OVERPASS_URL}
                 if [[ -f "${CONFIG.WORK_DIR}/missing_osm.xml" ]]; then
                     osmium cat -f opl -o "${CONFIG.WORK_DIR}/missing_osm.opl" "${CONFIG.WORK_DIR}/missing_osm.xml"
                     echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] \$(wc -l ${CONFIG.WORK_DIR}/missing_osm.opl | mawk '{print $1}') features has been retrieved from overpass"
