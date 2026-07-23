@@ -1091,7 +1091,7 @@ app.get("/users/:name", (req, res) => {
 });
 
 // Documentation
-["README.md", "DEVELOP.md", "LICENSE.txt"].forEach((file) => {
+["README.md", "docs/DEVELOP.md", "docs/CONTRIBUTE.md", "LICENSE.txt"].forEach((file) => {
   app.get(`/${file}`, (req, res) => {
     res.sendFile(path.join(__dirname, "..", file));
   });

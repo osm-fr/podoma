@@ -22,7 +22,7 @@ Podoma is **free and open source**, built by a passionate community of volunteer
 You can help make it better by:
 
 * 💬 [Sharing feedback or feature requests](https://github.com/osm-fr/podoma/issues) — in English or French
-* 🧑‍💻 [Contributing code or documentation](DEVELOP.md) — for new features or bug fixes
+* 🧑‍💻 [Contributing code or documentation](docs/DEVELOP.md) — for new features or bug fixes
 
 We embrace the [Digital Principles for Development](https://digitalprinciples.org/): our website and tools are built **for humans**.
 
@@ -46,7 +46,7 @@ Podoma powers several OSM-related initiatives across the community:
 
 * 🇫🇷 [ProjetDuMois](https://projetdumois.fr/) — Monthly community mapping projects (France)
 * ⚡ [Enedis OSM-FR](https://enedis.openstreetmap.fr) — Power grid mapping statistics (France)
-* 🌐 [MapYourGrid](https://dianethy.shinyapps.io/Progress_MapYourGrid/) — Global power grid mapping progress
+* 🌐 [MapYourGrid](https://mapyourgrid.infos-reseaux.com) — Global power grid mapping progress
 * 🇮🇹 [Progetto del mese](https://osmit-podoma.wmcloud.org/) — Monthly community mapping projects (Italy)
 
 ## 📬 Contact

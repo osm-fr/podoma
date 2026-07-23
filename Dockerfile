@@ -34,7 +34,8 @@ RUN sed -i -e 's/allow_read_prefs": "yes"/allow_read_prefs": "1"/g' ./lib/sendfi
 COPY --chown=osm:osm ./package.json ./package.json
 RUN npm install
 
-COPY --chown=osm:osm dockerfiles/docker-entrypoint.sh README.md ./
+COPY --chown=osm:osm dockerfiles/docker-entrypoint.sh LICENSE.txt README.md ./
+COPY --chown=osm:osm ./docs/ ./docs
 COPY --chown=osm:osm ./db/ ./db
 COPY --chown=osm:osm ./website ./website
 COPY --chown=osm:osm ./projects ./projects
