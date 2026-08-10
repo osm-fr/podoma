@@ -60,13 +60,13 @@ function macroChangesCsv (mode, project, oplProject, csvFeatures, csvUsers, csvM
         }
 
         script += `
-        echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Copy features"
+        echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Copy \$(wc -l < ${csvFeatures}) lines from features"
         ${PSQL} -c "\\COPY ${features_table} (osmid, version, changeset, action, contrib, ts, userid, tags, geom, tagsfilter) FROM '${csvFeatures}' CSV"
         `;
 
         if (csvMembers != null){
             script += `
-            echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Copy members"
+            echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Copy \$(wc -l < ${csvMembers}) lines from members"
             ${PSQL} -c "\\COPY ${members_table} (memberid, osmid, version, pos, role) FROM '${csvMembers}' CSV"
             `;
         }
@@ -90,17 +90,16 @@ function macroChangesCsv (mode, project, oplProject, csvFeatures, csvUsers, csvM
         ${PSQL} -c "TRUNCATE TABLE ${update_table}"
         ${PSQL} -c "DELETE FROM ${features_table} WHERE ts BETWEEN '${start_ts}' AND '${end_ts}'"
 
-        echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Copy features"
+        echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Copy \$(wc -l < ${csvFeatures}) lines from features"
         ${PSQL} -c "\\COPY ${update_table} (osmid, version, changeset, action, contrib, ts, userid, tags, geom, tagsfilter) FROM '${csvFeatures}' CSV"
         `;
 
         if (csvMembers != null){
             script += `
-            echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Copy members"
+            echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Copy \$(wc -l < ${csvMembers}) lines from members"
             ${PSQL} -c "DROP TABLE IF EXISTS ${members_table}_tmp"
             ${PSQL} -c "CREATE TABLE ${members_table}_tmp (LIKE ${members_table})"
             ${PSQL} -c "\\COPY ${members_table}_tmp (memberid, osmid, version, pos, role) FROM '${csvMembers}' CSV"
-            rm -f "${csvMembers}"
             `
         }
 
@@ -129,7 +128,7 @@ function macroChangesCsv (mode, project, oplProject, csvFeatures, csvUsers, csvM
                 curl -d @${CONFIG.WORK_DIR}/missing_osm.overpass --retry 10 --retry-max-time 250 -f -o "${CONFIG.WORK_DIR}/missing_osm.xml" -A "Podoma/1.0 (${CONFIG.WEBSITE_URL})" -X POST ${CONFIG.OVERPASS_URL}
                 if [[ -f "${CONFIG.WORK_DIR}/missing_osm.xml" ]]; then
                     osmium cat -f opl -o "${CONFIG.WORK_DIR}/missing_osm.opl" "${CONFIG.WORK_DIR}/missing_osm.xml"
-                    echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] \$(wc -l ${CONFIG.WORK_DIR}/missing_osm.opl | mawk '{print $1}') features has been retrieved from overpass"
+                    echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] \$(wc -l < ${CONFIG.WORK_DIR}/missing_osm.opl) features has been retrieved from overpass"
                     mawk -f ${OPL2FTS_FS} -v tagfilter="${project.database.osmium_tag_filter}" -v output_main="${CONFIG.WORK_DIR}/missing_osm.csv" -v output_users="${csvUsers}" ${awk_param_members} "${CONFIG.WORK_DIR}/missing_osm.opl"
 
                     ${PSQL} -c "\\COPY ${update_table} (osmid, version, changeset, action, contrib, ts, userid, tags, geom, tagsfilter) FROM '${CONFIG.WORK_DIR}/missing_osm.csv' CSV"
@@ -145,8 +144,12 @@ function macroChangesCsv (mode, project, oplProject, csvFeatures, csvUsers, csvM
 
         if (csvMembers != null){
             script += `
+            echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Copy \$(wc -l < ${csvMembers}) lines from members"
+            ${PSQL} -c "TRUNCATE TABLE ${members_table}_tmp"
+            ${PSQL} -c "\\COPY ${members_table}_tmp (memberid, osmid, version, pos, role) FROM '${csvMembers}' CSV"
             ${PSQL} -v members_table="${members_table}" -v members_table_tmp="${members_table}_tmp" -f "${__dirname}/25_changes_members.sql"
             ${PSQL} -c "DROP TABLE ${members_table}_tmp"
+            rm -f "${csvMembers}"
             `;
         }
 
@@ -199,7 +202,7 @@ function macroChangesCsv (mode, project, oplProject, csvFeatures, csvUsers, csvM
     echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Refresh changes"
     ${PSQL} -c "REFRESH MATERIALIZED VIEW ${changes_table}"
 
-    echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Process usernames"
+    echo "  [\$((\$(date -d now +%s) - \$process_start_t0))s] Process \$(wc -l < ${csvUsers}) usernames"
     ${PSQL} -c "DROP TABLE IF EXISTS ${features_table}_users"
     ${PSQL} -c "CREATE TABLE ${features_table}_users (LIKE pdm_user_names)"
     ${PSQL} -c "\\COPY ${features_table}_users (username, userid) FROM '${csvUsers}' CSV"
