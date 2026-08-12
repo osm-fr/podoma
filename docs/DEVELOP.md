@@ -58,6 +58,7 @@ The general configuration of the tool is to be filled in `config.json`. There is
 - `OSM_API_URL` : API OpenStreetMap instance to use (example `https://www.api.openstreetmap.org`)
 - `JOSM_REMOTE_URL`: address of the JOSM server to reach (example `http://localhost:8111`)
 - `OVERPASS_URL`: URL towards the interpreter of an Overpass-API instance to be used for missing members retrieval
+- `OVERPASS_FATAL`: whether a failed Overpass request should abort `update_changes` or just log a warning and continue processing the remaining projects with the missing members omitted
 - `OSMOSE_URL`: Osmose instance to use (example `https://osmose.openstreetmap.fr`)
 - `NOMINATIM_URL`: instance of Nominatim to use (example `https://nominatim.openstreetmap.org`)
 - `MAPILLARY_URL`: Mapillary instance to use (example `https://www.mapillary.com`)

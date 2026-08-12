@@ -9,6 +9,7 @@
   "OSM_PASS": "pass",
   "OSM_CLIENT_ID": "id",
   "OVERPASS_URL": "https://overpass-api.de/api/interpreter",
+  "OVERPASS_FATAL": true,
   "OSMOSE_URL": "https://osmose.openstreetmap.fr",
   "NOMINATIM_URL": "https://nominatim.openstreetmap.org",
   "MAPILLARY_URL": "https://www.mapillary.com",
