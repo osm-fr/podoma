@@ -54,5 +54,16 @@
   },
   "devDependencies": {
     "browserify": "^17.0.1"
+  },
+  "overrides": {
+    "jstransformer-markdown-it": {
+      "linkify-it": "5.0.2"
+    },
+    "linkify-it": {
+      "linkify-it": "5.0.2"
+    },
+    "markdown-it": {
+      "linkify-it": "5.0.2"
+    }
   }
 }
