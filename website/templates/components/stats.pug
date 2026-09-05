@@ -1,6 +1,15 @@
 //- Last update
 div.row
-	div.col-12.mb-2#stats-update
+	div.col-12.mb-2.d-none#stats-update
+		div.d-inline-block.mr-3
+			i.fa.fa-database(style="font-size: 70%;")
+			| #{__("Last update: ")}
+			span#stats-changes-update
+		div.d-inline-block
+			i.fa.fa-chart-simple(style="font-size: 70%;")
+			| #{__("Counts: ")}
+			span#stats-counts-update
+
 
 //- Synthetic stats
 div.row.mb-4#stats-blocks
@@ -57,8 +66,11 @@ script.
 		.then(res => res.json())
 		.then(res => {
 			// Last stats update time
-			const lastUpdate = document.getElementById("stats-update");
-			lastUpdate.innerHTML = "#{__("Last update: ")}" + (new Date(res.lastUpdate)).toLocaleDateString();
+			const statsUpdateBlock = document.getElementById("stats-update");
+			document.getElementById("stats-changes-update").innerHTML = new Date(res.lastUpdate).toLocaleDateString();
+			document.getElementById("stats-counts-update").innerHTML = new Date(res.lastCount).toLocaleDateString();
+			statsUpdateBlock.classList.remove("d-none");
+			statsUpdateBlock.classList.add("d-block");
 
 			// Blocks for small stats
 			const blocks = document.getElementById("stats-blocks");
@@ -123,10 +135,10 @@ script.
 				blocks.appendChild(b);
 			};
 
-			if(res.daily && res.daily.added) { addBlock("plus", numberFormat.format(res.daily.added), `#{__('%s added since %s', title.toLowerCase(), "${(new Date(res.daily.ts_start)).toLocaleDateString()}")}`, {"24h": res.daily.added - res.past.added}); }
-			if(res.current && res.current.count) { addBlock("location-dot", numberFormat.format(res.current.count), "#{__('%s currently in OSM', title.toLowerCase())}", {"live": res.current.count - res.daily.count}); }
+			if(res.past && res.daily && res.daily.added) { addBlock("plus", numberFormat.format(res.daily.added), `#{__('%s added since %s', title.toLowerCase(), "${(new Date(res.daily.ts_start)).toLocaleDateString()}")}`, {"24h": res.daily.added - res.past.added}); }
+			if(res.daily && res.current && res.current.count) { addBlock("location-dot", numberFormat.format(res.current.count), "#{__('%s currently in OSM', title.toLowerCase())}", {"live": res.current.count - res.daily.count}); }
 			if(res.tasksSolved !== undefined) { addBlock("triangle-exclamation", numberFormat.format(res.tasksSolved), "#{statistics.osmose_tasks}", null); }
-			if(res.daily && res.daily.nbContributors) { addBlock("users", numberFormat.format(res.daily.nbContributors), "#{__("contributors")}", {"24h": res.daily.nbContributors - res.past.nbContributors}); }
+			if(res.past && res.daily && res.daily.nbContributors) { addBlock("users", numberFormat.format(res.daily.nbContributors), "#{__("contributors")}", {"24h": res.daily.nbContributors - res.past.nbContributors}); }
 
 			// Leaderboard
 			if(res.leaderboard && res.leaderboard.length > 0) {

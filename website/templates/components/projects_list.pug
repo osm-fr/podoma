@@ -1,0 +1,12 @@
+div.container.blog-post
+    h2.blog-post-title
+        i.fa.fa-file-arrow-down.mr-2(style="font-size: 2.1rem")
+        | #{__("All our projects")}
+
+    p= __("Find all projects, tools, statistics and data.")
+        div.row.align-items-center
+            each proj in projectsList
+                include ./project_item.pug
+
+    if projectsStats && projectsStats.length > 0
+        p(style="font-size: 80%;")= __("Statistics updated everyday out of the day before")

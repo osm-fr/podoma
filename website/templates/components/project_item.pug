@@ -1,0 +1,29 @@
+div.col-md-6.col-lg-4.h-100
+    div.media.mb-3.p-2(style="background-color: white; border-radius: 10px")
+        a.align-self-center.mr-3(href=`/projects/${proj.name}`)
+            img(src=proj.icon alt="" style="max-width: 100px")
+        div.media-body.align-self-center
+            a.text-decoration-none(href=`/projects/${proj.name}`)
+                | #{proj.title}
+                span.text-muted.d-inline-block(style="font-size:80%;")
+                    | &nbsp;
+                    = new Date(proj.month).toLocaleString(getLocale(), { month: 'long', year: 'numeric' })
+            
+            if projectsStats != null && projectsStats.hasOwnProperty(proj.id)
+                div.mt-2.text-secondary(style="font-size: 80%;")
+                    i.fa.fa-location-dot
+                    = projectsStats[proj.id].features
+                    | &nbsp;
+                    span(class=`${projectsStats[proj.id].features_text}`)
+                        i(class=`fa ${projectsStats[proj.id].features_icon}`)
+                        | &nbsp;
+                        = projectsStats[proj.id].features_delta
+                    br
+                    i.fa.fa-users
+                    | &nbsp;
+                    = projectsStats[proj.id].mappers
+                    | &nbsp;
+                    span(class=`${projectsStats[proj.id].mappers_text}`)
+                        i(class=`fa ${projectsStats[proj.id].mappers_icon}`)
+                        | &nbsp;
+                        = projectsStats[proj.id].mappers_delta

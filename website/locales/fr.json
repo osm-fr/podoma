@@ -30,7 +30,8 @@
 	"Progress": "Progression",
 	"Notes": "Notes",
 	"Frequent keys": "Clés fréquentes",
-	"Last update: ": "Dernière mise à jour : ",
+	"Last update: ": "Mise à jour : ",
+	"Counts: ": "Dénombrements : ",
 	"contributors": "personnes contributrices",
 	"Total amount": "Nombre total",
 	"Total": "Total",
@@ -153,5 +154,14 @@
 	"Near the podium": "Près du podium",
 	"1st place": "1ère place",
 	"2nd place": "2ème place",
-	"3rd place": "3ème place"
+	"3rd place": "3ème place",
+	"3+ points": "3+ points",
+	"6+ points": "6+ points",
+	"10+ points": "10+ points",
+	"30+ points": "30+ points",
+	"42+ points": "42+ points",
+	"70+ points": "70+ points",
+	"100+ points": "100+ points",
+	"500+ points": "500+ points",
+	"Statistics updated everyday out of the day before": "Statistiques mis à jour quotidiennement à partir de la veille"
 }

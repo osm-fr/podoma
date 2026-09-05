@@ -21,29 +21,15 @@ block content
 
 				div.row
 					each proj in currentProjects
-						div.col-md-6.col-lg-4.h-100
-							div.media.my-1.p-2(style="background-color: white; border-radius: 10px")
-								a.align-self-center.mr-3(href=`/projects/${proj.name}`)
-									img(src=proj.icon alt="" style="height: 100px")
-								div.media-body.align-self-center
-									a.text-decoration-none(href=`/projects/${proj.name}`)= proj.title
+						include ../components/project_item.pug
 
-	//- Other projects
-	a#others
-	div.container-fluid.pb-5
-		div.container.blog-post
-			h2.blog-post-title
-				i.fa.fa-file-arrow-down.mr-2(style="font-size: 2.1rem")
-				| #{__("All our projects")}
+	if projectsList && projectsList.length > 0
+		//- Other projects
+		a#others
+		div.container-fluid.pb-5
+			include ../components/projects_list.pug
 
-			p= __("Find all projects, tools, statistics and data.")
-				div.row.align-items-center
-					each proj in otherProjects
-						div.col-md-6.col-lg-4.h-100
-							div.media.mb-3
-								a.align-self-center.mr-3(href=`/projects/${proj.name}`)
-									img(src=proj.icon alt="" style="max-width: 100px")
-								div.media-body.align-self-center
-									a.text-decoration-none(href=`/projects/${proj.name}`)
-										| #{proj.title}
-										span.text-muted.d-block= new Date(proj.month).toLocaleString(getLocale(), { month: 'long', year: 'numeric' })
+	else if projectsStats && projectsStats.length > 0
+		div.container-fluid.pb-5
+			div.container.blog-post
+				p(style="font-size: 80%;")= __("Statistics updated everyday out of the day before")

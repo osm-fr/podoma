@@ -31,6 +31,7 @@
 	"Notes": "Notes",
 	"Frequent keys": "Frequent keys",
 	"Last update: ": "Last update: ",
+	"Counts: ": "Counts: ",
 	"contributors": "contributors",
 	"Total amount": "Total amount",
 	"Total": "Total",
@@ -149,5 +150,18 @@
 	"Participated": "Participated",
 	"They have participated to the project": "They have participated to the project",
 	"Always present": "Always present",
-	"They have participated to all the projects": "They have participated to all the projects"
+	"They have participated to all the projects": "They have participated to all the projects",
+	"Near the podium": "Near the podium",
+	"1st place": "1st place",
+	"2nd place": "2nd place",
+	"3rd place": "3rd place",
+	"3+ points": "3+ points",
+	"6+ points": "6+ points",
+	"10+ points": "10+ points",
+	"30+ points": "30+ points",
+	"42+ points": "42+ points",
+	"70+ points": "70+ points",
+	"100+ points": "100+ points",
+	"500+ points": "500+ points",
+	"Statistics updated everyday out of the day before": "Statistics updated everyday out of the day before"
 }
