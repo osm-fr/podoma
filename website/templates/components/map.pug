@@ -18,12 +18,14 @@ div#edit-feature-location.alert.alert-primary.map-alert.d-none
 
 
 //- This runs on client
-script.
+script(type="module").
+	import * as maplibregl from "/lib/maplibre-gl/maplibre-gl.mjs";
+
 	const hashParams = new URLSearchParams(window.location.hash);
 	const listOfSources = !{JSON.stringify(pdmSources)};
 
 	// Map init
-	const map = new maplibregl.Map({
+	window.map = new maplibregl.Map({
 		container: 'map',
 		pitchWithRotate: false,
 		dragRotate: false,
@@ -112,7 +114,7 @@ script.
 	const notesSources = !{JSON.stringify(datasources.filter(ds => ds.source === "notes"))};
 	const geojsonBounds = !{JSON.stringify(CONFIG.GEOJSON_BOUNDS)};
 
-	function loadNotesOnMap() {
+	window.loadNotesOnMap = function () {
 		if(notesSources.length > 0) {
 			notesSources.forEach((noteSource, nsid) => {
 				const promises = noteSource.terms.map(term => osmApi.fetchNotesSearch(term, 'json', 10000, 0));
@@ -149,7 +151,7 @@ script.
 
 	// Show/hide feature marker
 	let featureMarker;
-	function showMarker(coords) {
+	window.showMarker = function (coords) {
 		if(!coords && featureMarker) {
 			featureMarker.remove();
 			featureMarker = null;
@@ -173,7 +175,7 @@ script.
 	const mapMoveListener = e => showMarker(map.getCenter());
 	let lastCallbackFeatureLocation = null;
 
-	function cancelAskFeatureLocation() {
+	window.cancelAskFeatureLocation = function () {
 		markerEditorDom.classList.add("d-none");
 		if(lastCallbackFeatureLocation) {
 			markerEditorValidDom.removeEventListener("click", lastCallbackFeatureLocation);
@@ -183,7 +185,7 @@ script.
 		}
 	}
 
-	function askFeatureLocation(callback) {
+	window.askFeatureLocation = function (callback) {
 		if(lastCallbackFeatureLocation) { cancelAskFeatureLocation(); }
 		markerEditorDom.classList.remove("d-none");
 
@@ -208,7 +210,7 @@ script.
 	//
 
 	// Handle map click
-	function onMapClick(e) {
+	window.onMapClick = function (e) {
 		if(!map || !e) { return; }
 		let features = map.queryRenderedFeatures(e.point);
 		if(features && features.length > 0) {
@@ -258,7 +260,7 @@ script.
 	}
 
 	// Display a certain feature
-	function showFeature(feature, e) {
+	window.showFeature = function (feature, e) {
 		const coordinates = feature.geometry.coordinates.slice();
 		if(e) {
 			while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
@@ -277,10 +279,12 @@ script.
 	map.on("click", onMapClick);
 
 
-//- Generate hover events for each layer dynamically on server
--
-	const hoverEvents = pdmSources
-		.map(id => `map.on('mouseenter', '${id}', () => { map.getCanvas().style.cursor = 'pointer'; });\nmap.on('mouseleave', '${id}', () => { map.getCanvas().style.cursor = ''; });`)
-		.join("\n");
-
-script !{hoverEvents}
+	// Generate hover events for each layer
+	listOfSources.forEach(id => {
+		map.on('mouseenter', id, () => {
+			map.getCanvas().style.cursor = 'pointer';
+		});
+		map.on('mouseleave', id, () => {
+			map.getCanvas().style.cursor = '';
+		});
+	});

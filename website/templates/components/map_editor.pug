@@ -86,7 +86,9 @@ div#pdm-editor-done.d-none
 	button#pdm-editor-done-btnmap.btn.btn-outline-primary.btn-block.d-md-none(type="button")= __("Go back to map")
 	button#pdm-editor-done-btnok.btn.btn-outline-primary.btn-block.d-none.d-md-block(type="button")= __("OK")
 
-script.
+script(type="module").
+	import * as maplibregl from "/lib/maplibre-gl/maplibre-gl.mjs";
+	
 	const editorModeDom = document.getElementById("pdm-editor-mode");
 	const editorFormDom = document.getElementById("pdm-editor-form");
 	const editorNoteDom = document.getElementById("pdm-editor-note");
@@ -102,7 +104,7 @@ script.
 	//
 
 	// Show proper editing mode (note or feature)
-	function showEditingMode() {
+	window.showEditingMode = function () {
 		if(editorModeDom) {
 			if(window.osm_user) { editorModeDom.innerHTML = "#{__("You are logged in: this form will directly edit OpenStreetMap")}"; }
 			else { editorModeDom.innerHTML = "#{__("You are not logged in: this form will create an OpenStreetMap note")}"; }
@@ -110,7 +112,7 @@ script.
 	}
 
 	// Show prompt before leaving page
-	function askBeforeUnload(e) {
+	window.askBeforeUnload = function (e) {
 		e.preventDefault();
 		e.returnValue = "#{__("If you leave the page, the current modifications will be lost.")}";
 		return e.returnValue;
@@ -121,7 +123,7 @@ script.
 	window.addEventListener("osm_logout", showEditingMode);
 
 	// Check if an OSM feature tags matches pattern PdM tags
-	function checkFeatureMatchesPatternTags(osmTags, pdmKey, pdmPattern) {
+	window.checkFeatureMatchesPatternTags = function (osmTags, pdmKey, pdmPattern) {
 		if(typeof pdmPattern !== "object") {
 			return false;
 		}
@@ -144,7 +146,7 @@ script.
 	}
 
 	// Load form with existing tags
-	function loadForm() {
+	window.loadForm = function () {
 		editorFormDom.reset();
 
 		// Prefill form with optional tags
@@ -202,7 +204,7 @@ script.
 	}
 
 	// Reset map and sidebar on cancel / done
-	function cancelEdit(close = true, keepPanel = false) {
+	window.cancelEdit = function (close = true, keepPanel = false) {
 		currentEditorData = null;
 		showMarker();
 		window.onbeforeunload = null;
@@ -227,7 +229,7 @@ script.
 
 	// First editing step : ask location on map
 	// Options can be used to pre-fill tags and close note/osmose issue
-	function onStartNewFeature(options = {}) {
+	window.onStartNewFeature = function (options = {}) {
 		window.dispatchEvent(new CustomEvent("pdm_sidebar_use", { detail: { close: "noCancelLoc" } }));
 		currentEditorData = options;
 		currentEditorData.mode = "add";
@@ -238,7 +240,7 @@ script.
 	}
 
 	// Second step : once located, ask for details
-	function onNewFeatureLocated(coordinates) {
+	window.onNewFeatureLocated = function (coordinates) {
 		currentEditorData.coordinates = coordinates;
 		currentEditorData.usedZoom = map.getZoom();
 		editorMoveButton.classList.add("d-none");
@@ -254,7 +256,7 @@ script.
 	//
 
 	// Start
-	function onStartEditFeature(options = {}) {
+	window.onStartEditFeature = function (options = {}) {
 		if(!options.osmid) { cancelEdit(); }
 
 		currentEditorData = options;
@@ -285,7 +287,7 @@ script.
 	}
 
 	// Change coordinates
-	function onEditedFeatureMoved(coordinates) {
+	window.onEditedFeatureMoved = function (coordinates) {
 		currentEditorData.coordinates = coordinates;
 		currentEditorData.usedZoom = map.getZoom();
 		window.dispatchEvent(new CustomEvent("pdm_sidebar_use", { detail: { panel: "editor", open: true } }));
@@ -304,7 +306,7 @@ script.
 	}
 
 	// Check and send to OSM
-	function onFeatureFormSubmit(e) {
+	window.onFeatureFormSubmit = function (e) {
 		e.preventDefault();
 		showMarker();
 		const formData = Object.fromEntries([...new FormData(e.target)].filter(kv => kv[0] && !kv[0].startsWith("_") && kv[1] && kv[1].toString().trim() !== ""));
@@ -514,7 +516,7 @@ script.
 	//
 
 	// Start
-	function onStartTextNote(options = {}) {
+	window.onStartTextNote = function (options = {}) {
 		currentEditorData = options;
 		if(options.coordinates || options.originalCoordinates) { map.setCenter(options.coordinates || options.originalCoordinates); }
 		window.dispatchEvent(new CustomEvent("pdm_sidebar_use", { detail: { close: "noCancelLoc" } }));
@@ -523,7 +525,7 @@ script.
 
 	// After asking for coordinates, display form
 	// Second step : once located, ask for details
-	function onNewNoteLocated(coordinates) {
+	window.onNewNoteLocated = function (coordinates) {
 		currentEditorData.coordinates = coordinates;
 		currentEditorData.usedZoom = map.getZoom();
 		editorNoteDom.reset();
@@ -538,7 +540,7 @@ script.
 	}
 
 	// Saving note
-	function onNoteFormSubmit(e) {
+	window.onNoteFormSubmit = function (e) {
 		e.preventDefault();
 		showMarker();
 

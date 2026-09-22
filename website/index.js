@@ -876,16 +876,14 @@ const authorized = {
     "zoom.js": "dist/chartjs-plugin-zoom.min.js",
   },
   "maplibre-gl": {
-    "maplibre-gl.js": "dist/maplibre-gl.js",
+    "maplibre-gl.mjs": "dist/maplibre-gl.mjs",
+    "maplibre-gl-worker.mjs": "dist/maplibre-gl-worker.mjs",
+    "maplibre-gl-shared.mjs": "dist/maplibre-gl-shared.mjs",
     "maplibre-gl.css": "dist/maplibre-gl.css",
   },
   "mapillary-js": {
     "mapillary.js": "dist/mapillary.js",
     "mapillary.css": "dist/mapillary.css",
-  },
-  "@panoramax/web-viewer": {
-    "photoviewer.js": "build/photoviewer.js",
-    "photoviewer.css": "build/photoviewer.css",
   },
   "moment": {
     "moment.js": "moment.js"

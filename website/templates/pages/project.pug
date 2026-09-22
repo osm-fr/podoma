@@ -1,9 +1,5 @@
 extends ../layout.pug
 
-block head
-	//- Map specific libraries
-	script(src="/lib/maplibre-gl/maplibre-gl.js")
-
 block navbar
 	if !isActive && !isNext
 		a(href="/#summary")
