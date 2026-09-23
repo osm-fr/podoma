@@ -222,11 +222,9 @@ app.get("/projects/:name", (req, res) => {
     all.current.some((p) => p.name === req.params.name);
   const isNext =
     all.next && all.next.some((p) => p.name === req.params.name);
-  const isHardEnded = all.past.some(p => (
-    p.id === req.params.id
-    && p.end_date != null
-    && new Date(p.end_date + "T23:59:59Z").getTime() < Date.now()
-  ));
+  const isHardEnded =
+    p.end_date != null &&
+    new Date(p.end_date + "T23:59:59Z").getTime() < Date.now();
   
   const RECENT_PAST_DAYS = 30,
     recentPastThreshold = Date.now() - RECENT_PAST_DAYS * 24 * 60 * 60 * 1000;
