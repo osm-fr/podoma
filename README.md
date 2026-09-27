@@ -56,7 +56,7 @@ Questions, ideas, or collaboration proposals?
 
 ## 🧾 License
 
-**© 2024–2025 Podoma Team**
+**© 2024–2026 Podoma Team**
 
 Podoma is free software licensed under the **GNU Affero General Public License v3 (AGPL-3.0)** or later.
 See the [LICENSE](LICENSE.txt) file for details.

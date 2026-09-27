@@ -152,7 +152,7 @@ script.
 
 						if (field.hasOwnProperty("help")){
 							helpBadge = document.createElement("a");
-							helpBadge.className = "badge badge-pill text-light ml-2 bg-info";
+							helpBadge.className = "badge rounded-pill text-light ms-2 bg-info";
 							helpBadge.href = field.help;
 							helpBadge.title = "#{__("More details about this field")}";
 							helpBadge.target = "_blank";
@@ -373,7 +373,7 @@ script.
 				}
 
 				const divButtons = document.createElement("div");
-				divButtons.classList.add("btn-group", "btn-block", "mt-1");
+				divButtons.classList.add("btn-group", "w-100", "mt-1");
 				divButtons.role = "group";
 
 				const divButtonDone = document.createElement("button");
@@ -388,7 +388,7 @@ script.
 				divButtonFalse.title = "Marquer cet élément comme \""+buttons.false+"\" si le signalement n'est pas valide";
 				divButtonFalse.addEventListener("click", markOsmose("false", feature));
 
-				createFeatureButton(resDiv, origOsmFeature ? "edit" : "add", "btn-block mt-3 mb-1 dropup", {
+				createFeatureButton(resDiv, origOsmFeature ? "edit" : "add", "w-100 mt-3 mb-1 dropup", {
 					title: buttons[origOsmFeature ? "edit" : "add"],
 					tags: tagsForEdit,
 					osmid: origOsmFeature ? origOsmFeatureId : undefined,
@@ -455,7 +455,7 @@ script.
 			});
 
 			const divButtons = document.createElement("div");
-			divButtons.classList.add("btn-group", "btn-block", "mt-1");
+			divButtons.classList.add("btn-group", "w-100", "mt-1");
 			divButtons.role = "group";
 
 			const divButtonDone = document.createElement("button");
@@ -498,7 +498,7 @@ script.
 				);
 			}
 
-			createFeatureButton(resDiv, osmFeature ? "edit": "add", "btn-block mb-1 dropup", {
+			createFeatureButton(resDiv, osmFeature ? "edit": "add", "w-100 mb-1 dropup", {
 				noteid: "note/"+p.id,
 				osmid: osmFeature ? featureId : undefined,
 				originalCoordinates: osmFeature ? { lng: osmFeature.geometry.coordinates[0], lat: osmFeature.geometry.coordinates[1] } : originalCoordinates,
@@ -521,7 +521,7 @@ script.
 
 			getReadableTags(resDiv, tags);
 
-			createFeatureButton(resDiv, "edit", "btn-block mt-2 dropup", {
+			createFeatureButton(resDiv, "edit", "w-100 mt-2 dropup", {
 				osmid: p.osm_id,
 				tags,
 				originalCoordinates
@@ -540,17 +540,17 @@ script.
 			getReadableTags(resDiv, tags, "Attributs");
 
 			if(s.startsWith("osm-compare_")) {
-				createFeatureButton(resDiv, "add", "btn-block mt-2 dropup", { originalCoordinates });
+				createFeatureButton(resDiv, "add", "w-100 mt-2 dropup", { originalCoordinates });
 
 				const divButtonFalse = document.createElement("button");
-				divButtonFalse.classList.add("btn", "btn-warning", "btn-block", "mt-2");
+				divButtonFalse.classList.add("btn", "btn-warning", "w-100", "mt-2");
 				divButtonFalse.appendChild(document.createTextNode("✘ #{__("Nothing here / Already done")}"));
 				divButtonFalse.title = "Mark as done here if you didn't see any #{statistics.feature_name} during survey";
 				divButtonFalse.addEventListener("click", e => ignoreOsmCompare(feature));
 				resDiv.appendChild(divButtonFalse);
 			}
 			else {
-				createFeatureButton(resDiv, "info", "btn-block mt-2 dropup", {
+				createFeatureButton(resDiv, "info", "w-100 mt-2 dropup", {
 					osmid: p.osm_id,
 					tags,
 					originalCoordinates

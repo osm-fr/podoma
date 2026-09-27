@@ -2,7 +2,7 @@ extends ../layout.pug
 
 
 block navbar
-	a(href="/about")
+	a.text-decoration-none(href="/about")
 		i.fa.fa-flag(title=__("About"))
 		span= __("About")
 
@@ -10,11 +10,11 @@ block navbar
 block content
 	div.container
 		h2.mb-2
-			i.fa.fa-triangle-exclamation.mr-2
+			i.fa.fa-triangle-exclamation.me-2
 			| #{__("Error %s", httpcode)}
 		//- Wide image
 		a(href="/")
-			img.w-100.rounded-lg(src="/images/httperror.png" title=__("Go back to homepage") alt=__("Error %s : nothing but desert here...", httpcode))
+			img.w-100.rounded-3(src="/images/httperror.png" title=__("Go back to homepage") alt=__("Error %s : nothing but desert here...", httpcode))
 
 		//- Where to go
 		div.lead.text-center.m-5

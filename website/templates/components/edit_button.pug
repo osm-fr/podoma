@@ -50,7 +50,7 @@ script.
 			button.appendChild(buttonIcon);
 
 			button.classList.add("btn-primary", "d-flex", "align-items-center", "justify-content-center");
-			buttonIcon.classList.add("mr-3");
+			buttonIcon.classList.add("me-3");
 
 			// Group
 			const group = document.createElement("div");
@@ -69,7 +69,7 @@ script.
 				dropButton = document.createElement("button");
 				dropButton.classList.add("btn", "btn-primary", "dropdown-toggle");
 				dropButton.setAttribute("type", "button");
-				dropButton.setAttribute("data-toggle", "dropdown");
+				dropButton.setAttribute("data-bs-toggle", "dropdown");
 				group.appendChild(dropButton);
 
 				dropButton.classList.add("dropdown-toggle-split");
@@ -98,7 +98,7 @@ script.
 					group.classList.add("dropdown");
 				}
 				button.classList.add("dropdown-toggle", "text-wrap");
-				button.setAttribute("data-toggle", "dropdown");
+				button.setAttribute("data-bs-toggle", "dropdown");
 			}
 
 			const editWithApp = document.createElement("a");

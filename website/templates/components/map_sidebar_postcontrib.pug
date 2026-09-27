@@ -8,8 +8,8 @@ div#pdm-postcontrib-badges.d-none
 			+user_connect
 	div#pdm-postcontrib-auth.d-none.row
 
-button#pdm-postcontrib-map.btn.btn-outline-primary.btn-block.d-md-none(type="button")= __("Back to map")
-button#pdm-postcontrib-ok.btn.btn-outline-primary.btn-block.d-none.d-md-block(type="button")= __("OK")
+button#pdm-postcontrib-map.btn.btn-outline-primary.w-100.d-md-none(type="button")= __("Back to map")
+button#pdm-postcontrib-ok.btn.btn-outline-primary.w-100.d-none.d-md-block(type="button")= __("OK")
 
 script.
 	document.getElementById("pdm-postcontrib-map").addEventListener("click", e => window.dispatchEvent(new CustomEvent("pdm_sidebar_use", { detail: { close: true } })));
@@ -48,7 +48,7 @@ script.
 						img.title = badge.description;
 
 						if(badge.acquired) {
-							img.classList.add("mr-2");
+							img.classList.add("me-2");
 							img.style.maxWidth = "72px";
 							img.style.maxHeight = "72px";
 							domBadge.appendChild(img);

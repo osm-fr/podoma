@@ -1,12 +1,13 @@
 nav.navbar.navbar-expand-sm.navbar-light.bg-light.d-flex.justify-content-between.align-items-center.flex-nowrap
-	div
-		button.btn.btn-outline-secondary.toggle-map-sidebar.mr-2
-			i.fa.fa-bars
-		a.navbar-brand.d-inline-block.d-md-none(title=__("Back to homepage") href="/")
-			img(src="/images/favicon.png" alt="")
-		a.navbar-brand.d-none.d-md-inline-block(title=__("Back to homepage") href="/")
-			img(src="/images/logo_mini.png" alt="")
-			h1= CONFIG.WEBSITE_NAME
+	div.container-fluid
+		div
+			button.btn.btn-outline-secondary.toggle-map-sidebar.me-2
+				i.fa.fa-bars
+			a.navbar-brand.d-none.d-sm-inline-block.d-md-none(title=__("Go back to homepage") href="/")
+				img(src="/images/favicon.png" alt="")
+			a.navbar-brand.d-none.d-md-inline-block(title=__("Go back to homepage") href="/")
+				img(src="/images/logo_mini.png" alt="")
+				h1= CONFIG.WEBSITE_NAME
 
-	div.form-inline
-		+user_button
+		div.d-flex
+			+user_button

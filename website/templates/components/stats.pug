@@ -1,7 +1,7 @@
 //- Last update
 div.row
 	div.col-12.mb-2.d-none#stats-update
-		div.d-inline-block.mr-3
+		div.d-inline-block.me-3
 			i.fa.fa-database(style="font-size: 70%;")
 			| #{__("Last update: ")}
 			span#stats-changes-update
@@ -25,14 +25,14 @@ div.row
 			br.mb-2
 			+user_connect
 		div#stats-leaderboard-container.d-none.row.align-items-center
-			div#stats-podium.col-md-7.row.justify-content-start.align-items-end.no-gutters.mb-3.mb-md-0
+			div#stats-podium.col-md-7.row.justify-content-start.align-items-end.g-0.mb-3.mb-md-0
 			div.overflow-auto.col-md-5.px-0(style="max-height: 300px")
 				table.table.table-sm
 					thead.sticky-top.thead-light
 						tr
 							th(scope="col") #
 							th(scope="col")= __("Username")
-							th(scope="col").text-right.pr-2= __("Points")
+							th(scope="col").text-end.pe-2= __("Points")
 					tbody#stats-leaderboard
 
 	//- Count per admin boundary
@@ -94,12 +94,12 @@ script.
 				b.classList.add("col-lg-4", "mb-2");
 
 				const sb = document.createElement("div");
-				sb.classList.add("p-4", "no-gutters", "border", "rounded", "overflow-hidden", "flex-lg-row", "shadow-sm", "position-relative", "h-100");
+				sb.classList.add("p-4", "g-0", "border", "rounded", "overflow-hidden", "flex-lg-row", "shadow-sm", "position-relative", "h-100");
 				b.appendChild(sb);
 				
 				if (dLen > 0){
 					const d = document.createElement("div");
-					d.classList.add("float-right");
+					d.classList.add("float-end");
 					
 					for (const dClass in deltas){
 						let dVal = deltas[dClass];
@@ -234,7 +234,7 @@ script.
 
 					const td3 = document.createElement("td");
 					td3.appendChild(document.createTextNode(numberFormat.format(lb.amount)));
-					td3.classList.add("align-middle", "text-right", "pr-2");
+					td3.classList.add("align-middle", "text-end", "pe-2");
 					tr.appendChild(td3);
 
 					// Add to podium
@@ -555,7 +555,7 @@ script.
 						});
 
 						const titleSpan = document.createElement("span");
-						titleSpan.classList.add("font-weight-bold");
+						titleSpan.classList.add("fw-bold");
 						titleSpan.appendChild(document.createTextNode(f.properties.name));
 
 						div.appendChild(titleSpan);
@@ -583,7 +583,7 @@ script.
 						const div = document.createElement("div");
 						const spanTitle = document.createElement("span");
 						spanTitle.appendChild(document.createTextNode(`${f.properties.name}`));
-						spanTitle.classList.add("font-weight-bold")
+						spanTitle.classList.add("fw-bold")
 						const spanFull = document.createElement("span");
 						spanFull.appendChild(document.createTextNode(`${f.properties.delta_project}`));
 						div.appendChild(spanTitle);
@@ -617,11 +617,11 @@ script.
 					symbol1.style.backgroundColor = data.color;
 
 					const symbol1LabelDiv = document.createElement("div");
-					symbol1LabelDiv.classList.add("text-right");
+					symbol1LabelDiv.classList.add("text-end");
 					const symbol1LabelBoundary = document.createElement("div");
 					symbol1LabelBoundary.classList.add("map-stats-symbol-boundary");
 					const symbol1LabelBoundaryLabel = document.createElement("span");
-					symbol1LabelBoundaryLabel.classList.add("font-weight-bold");
+					symbol1LabelBoundaryLabel.classList.add("fw-bold");
 					symbol1LabelBoundaryLabel.appendChild(document.createTextNode(`${admLvlToText[lvl]}`));
 					symbol1LabelBoundary.appendChild(symbol1LabelBoundaryLabel);
 					symbol1LabelBoundary.appendChild(document.createElement("br"));

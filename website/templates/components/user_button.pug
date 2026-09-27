@@ -29,7 +29,7 @@ script.
 					notifDom.href = notif.u;
 
 					const img = document.createElement("img");
-					img.classList.add("mr-1");
+					img.classList.add("me-1");
 					img.src = "/images/"+notif.i;
 					img.style.width = "17px";
 					notifDom.appendChild(img);
@@ -69,7 +69,7 @@ script.
 			icon.classList.add("fa", "fa-user");
 			const txt = document.createElement("span");
 			txt.appendChild(document.createTextNode(window.osm_user.name));
-			txt.classList.add("d-none", "d-sm-inline", "ml-1");
+			txt.classList.add("d-none", "d-sm-inline", "ms-1");
 			domConnect.appendChild(icon);
 			domConnect.appendChild(txt);
 			domConnect.title = "#{__("Logout")}";
@@ -92,7 +92,7 @@ script.
 			icon.classList.add("fa", "fa-right-to-bracket");
 			const txt = document.createElement("span");
 			txt.appendChild(document.createTextNode("#{__("Register / Login")}"));
-			txt.classList.add("d-none", "d-sm-inline", "ml-1");
+			txt.classList.add("d-none", "d-sm-inline", "ms-1");
 			domConnect.appendChild(icon);
 			domConnect.appendChild(txt);
 			domConnect.title = "#{__("Register / Login")}";
@@ -163,32 +163,32 @@ script.
 
 mixin user_button
 	div.pdm-user-button
-		button.connect-osm-ub.btn.btn-outline-secondary.text-truncate.ml-2(role="button" title=__("Register / Login"))
+		button.connect-osm-ub.btn.btn-outline-secondary.text-truncate.ms-2(role="button" title=__("Register / Login"))
 			i.fa.fa-right-to-bracket
-			span.d-none.d-lg-inline.ml-1= __("Register / Login")
+			span.d-none.d-lg-inline.ms-1= __("Register / Login")
 
 		div.dropdown.d-none
-			button.btn.btn-outline-secondary.dropdown-toggle.text-truncate.ml-2(type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false")
+			button.btn.btn-outline-secondary.dropdown-toggle.text-truncate.ms-2(type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false")
 				i.fa.fa-user
-				span.d-none.d-lg-inline.ml-1.pdm-username= __("User")
-				span.badge.badge-info.ml-1.d-none(title=__("Unread notifications"))
+				span.d-none.d-lg-inline.ms-1.pdm-username= __("User")
+				span.badge.badge-info.ms-1.d-none(title=__("Unread notifications"))
 					i.fa.fa-bell
 			div.dropdown-menu
 				div.pdm-notifs.d-none
 					h6.dropdown-header
-						i.fa.fa-bell.mr-1
+						i.fa.fa-bell.me-1
 						| #{__("Notifications")}
 					div.dropdown-divider
 
 				a.dropdown-item.pdm-user-page-btn(href="")
-					i.fa.fa-medal.mr-1
+					i.fa.fa-medal.me-1
 					| #{__("My badges")}
 				div.dropdown-divider
 				a.disconnect-osm-ub.dropdown-item
-					i.fa.fa-right-from-bracket.mr-1
+					i.fa.fa-right-from-bracket.me-1
 					| #{__("Logout")}
 
 mixin user_connect
 	button.connect-osm.btn.btn-lg.btn-primary(role="button")
 		i.fa.fa-right-to-bracket
-		span.d-none.d-sm-inline.ml-1= __("Register / Login")
+		span.d-none.d-sm-inline.ms-1= __("Register / Login")

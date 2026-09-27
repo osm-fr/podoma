@@ -5,10 +5,10 @@ a.d-inline-block.d-md-none.w-100.text-center.mb-1(href="/" title=__("Go back to 
 //- Switch between map and list
 div.btn-group.w-100.mb-2.mt-2(role="group")
 	button.btn.btn-secondary.w-50(type="button" disabled="")
-		i.fa.fa-map.mr-1
+		i.fa.fa-map.me-1
 		| #{__("Map")}
 	a.btn.btn-outline-secondary.w-50(href=`/projects/${name}/issues` role="button")
-		i.fa.fa-list.mr-1
+		i.fa.fa-list.me-1
 		| #{__("List")}
 
 //- Legend entries
@@ -62,8 +62,8 @@ div.map-background-container.px-3
 script !{legendClickEvents}
 
 //- KML Export button
-a#pdm-export-kml.btn.btn-block.btn-outline-secondary(role="button" title=__("Download a KML file to contribute with a smartphone app"))
-	i.fa.fa-download.mr-1
+a#pdm-export-kml.btn.w-100.btn-outline-secondary(role="button" title=__("Download a KML file to contribute with a smartphone app"))
+	i.fa.fa-download.me-1
 	| #{__("Export features to check")}
 
 script.

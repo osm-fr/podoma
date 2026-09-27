@@ -12,27 +12,27 @@ div.pdm-sidebar#pdm-issues-sidebar.pdm-hidden.pdm-sidebar
 
 			div.btn-group.w-100.mb-2.mt-2(role="group")
 				a.btn.btn-outline-secondary.w-50(href=`/projects/${name}/map` role="button")
-					i.fa.fa-map.mr-1
+					i.fa.fa-map.me-1
 					| #{__("Map")}
 				button.btn.btn-secondary.w-50(type="button" disabled="")
-					i.fa.fa-list.mr-1
+					i.fa.fa-list.me-1
 					| #{__("List")}
 
 			form#filters.mt-3
 				p.mb-1= __("Filters")
-				div.form-group.form-check.form-check-inline.m-0.mr-1
+				div.form-check.form-check-inline.m-0.me-1
 					input#filterReadyMerge.form-check-input(type="checkbox" name="ready")
 					label.form-check-label(for="filterReadyMerge")
-						span.badge.badge-pill.badge-outline-success= __("Ready to integrate")
-				div.form-group.form-check.form-check-inline.m-0.mr-1
+						span.badge.rounded-pill.badge-outline-success= __("Ready to integrate")
+				div.form-check.form-check-inline.m-0.me-1
 					input#filterPicture.form-check-input(type="checkbox" name="picture")
 					label.form-check-label(for="filterPicture")
-						span.badge.badge-pill.badge-outline-success= __("With picture")
+						span.badge.rounded-pill.badge-outline-success= __("With picture")
 				br
-				div.form-group.form-check.form-check-inline.m-0.mr-1
+				div.form-check.form-check-inline.m-0.me-1
 					input#filterAnonymous.form-check-input(type="checkbox" name="anonymous")
 					label.form-check-label(for="filterAnonymous")
-						span.badge.badge-pill.badge-outline-primary= __("Anonymous")
+						span.badge.rounded-pill.badge-outline-primary= __("Anonymous")
 
 script.
 	const issuesSidebarDom = document.getElementById("pdm-issues-sidebar");
@@ -62,7 +62,7 @@ script.
 			flts.forEach((flt, i) => {
 				const fltNoPrefix = flt.startsWith("user/") ? flt.substring(5) : flt;
 				const fltDom = document.createElement("div");
-				fltDom.classList.add("form-group", "form-check", "form-check-inline", "m-0", "mr-1");
+				fltDom.classList.add("form-check", "form-check-inline", "m-0", "me-1");
 
 				const fltInput = document.createElement("input");
 				fltInput.id = "filter_"+flt;
@@ -74,7 +74,7 @@ script.
 				const fltLabel = document.createElement("label");
 				fltLabel.classList.add("form-check-label");
 				fltLabel.setAttribute("for", fltInput.id);
-				fltLabel.innerHTML = `<span class="badge badge-pill badge-outline-${color}">${fltNoPrefix}</span>`;
+				fltLabel.innerHTML = `<span class="badge rounded-pill badge-outline-${color}">${fltNoPrefix}</span>`;
 				fltDom.appendChild(fltLabel);
 
 				issuesFilters.appendChild(fltDom);

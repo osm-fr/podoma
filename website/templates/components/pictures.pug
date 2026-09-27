@@ -40,18 +40,18 @@ script.
 				carousel.id = options.id || "picturesCarousel";
 				carousel.classList.add("carousel", "slide", ...cssClasses);
 
-				carousel.innerHTML = `<a class="carousel-control-prev" href="#${carousel.id}" role="button" data-slide="prev">
+				carousel.innerHTML = `<a class="carousel-control-prev" href="#${carousel.id}" role="button" data-bs-slide="prev">
 						<span class="carousel-control-prev-icon" aria-hidden="true"></span>
-						<span class="sr-only">#{__("Previous")}</span>
+						<span class="visually-hidden">#{__("Previous")}</span>
 					</a>
-					<a class="carousel-control-next" href="#${carousel.id}" role="button" data-slide="next">
+					<a class="carousel-control-next" href="#${carousel.id}" role="button" data-bs-slide="next">
 						<span class="carousel-control-next-icon" aria-hidden="true"></span>
-						<span class="sr-only">#{__("Next")}</span>
+						<span class="visually-hidden">#{__("Next")}</span>
 					</a>`;
 
 				const carouselIndicators = document.createElement("ol");
 				carouselIndicators.classList.add("carousel-indicators");
-				carouselIndicators.innerHTML = pictures.map((p,i) => `<li data-target="#${carousel.id}" data-slide-to="${i}" class="${i === 0 ? "active" : ""}"></li>`).join("");
+				carouselIndicators.innerHTML = pictures.map((p,i) => `<li data-bs-target="#${carousel.id}" data-bs-slide-to="${i}" class="${i === 0 ? "active" : ""}"></li>`).join("");
 				carousel.appendChild(carouselIndicators);
 
 				const carouselInner = document.createElement("div");

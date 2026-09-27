@@ -1,19 +1,19 @@
 div#map.map-main
 
-div.alert.alert-warning.map-alert.font-weight-bold.show-low-zoom= __("Zoom in or search a place to start")
+div.alert.alert-warning.map-alert.fw-bold.show-low-zoom= __("Zoom in or search a place to start")
 
-div#map-alert-loading.alert.alert-info.map-alert.font-weight-bold.d-none
-	div.spinner-border.text-primary.align-middle.mr-2(role="status" style="width: 48px; height: 48px")
+div#map-alert-loading.alert.alert-info.map-alert.fw-bold.d-none
+	div.spinner-border.text-primary.align-middle.me-2(role="status" style="width: 48px; height: 48px")
 	| #{__("Loading in progress")}
 
 div#edit-feature-location.alert.alert-primary.map-alert.d-none
 	| #{__("Move to exact location")}
-	div.btn-group.btn-block.mt-1
+	div.btn-group.w-100.mt-1
 		button.btn.btn-success.w-50(role="button")
-			i.fa.fa-check.mr-2
+			i.fa.fa-check.me-2
 			| #{__("Validate")}
 		button.btn.btn-warning.w-50(role="button")
-			i.fa.fa-ban.mr-2
+			i.fa.fa-ban.me-2
 			| #{__("Cancel")}
 
 
@@ -76,7 +76,7 @@ script.
 	// Add feature button
 	createFeatureButton(document.body, "add", "btn-floating btn-primary hide-low-zoom", { mini: true });
 	if(editors.pdm) {
-		createFeatureButton(document.getElementById("legend-edit-button"), "add", "btn-block", { mapcoords: true, textnote: true });
+		createFeatureButton(document.getElementById("legend-edit-button"), "add", "w-100", { mapcoords: true, textnote: true });
 	}
 
 	// Geolocate

@@ -1,4 +1,4 @@
-div#issues-list.row.no-gutters.no-sidebar
+div#issues-list.row.g-0.no-sidebar
 
 script.
 	const issuesListDom = document.getElementById("issues-list");
@@ -75,7 +75,7 @@ script.
 		issueUserDom.classList.add("card-header");
 		if(issue.properties.comments.length > 1) {
 			const badgeComms = document.createElement("span");
-			badgeComms.classList.add("badge", "badge-pill", "badge-primary", "float-right", "cursor-pointer");
+			badgeComms.classList.add("badge", "rounded-pill", "bg-primary", "float-end", "cursor-pointer");
 			badgeComms.setAttribute("data-filter", "comments");
 			badgeComms.appendChild(document.createTextNode(`${issue.properties.comments.length - 1} #{__("comment(s)")}`));
 			badgeComms.addEventListener("click", e => commentsDom.classList.toggle("d-none"));
@@ -150,7 +150,7 @@ script.
 		.filter(t => !editorsHashtags.includes(t.substring(1)) && t.length >= 3)
 		.map(t => {
 			const b = document.createElement("span");
-			b.classList.add("badge", "badge-pill", "badge-secondary", "mr-1");
+			b.classList.add("badge", "rounded-pill", "bg-secondary", "me-1");
 			b.setAttribute("data-filter", t.substring(1).toLowerCase());
 			b.appendChild(document.createTextNode(t.substring(1).toLowerCase()));
 			customFilters.add(t.substring(1));
@@ -160,7 +160,7 @@ script.
 		// Can be processed directly ?
 		if(issue.properties.comments[0].text.includes("#{__("Defined tags:")}")) {
 			const badgeDirect = document.createElement("span");
-			badgeDirect.classList.add("badge", "badge-pill", "badge-success", "mr-1");
+			badgeDirect.classList.add("badge", "rounded-pill", "bg-success", "me-1");
 			badgeDirect.setAttribute("data-filter", "ready");
 			badgeDirect.appendChild(document.createTextNode("#{__("Ready to integrate")}"));
 			badges.push(badgeDirect);
@@ -194,7 +194,7 @@ script.
 					}
 			});
 		});
-		createFeatureButton(issueBodyDom, featureId ? "edit": "add", "btn-block mb-1 dropup", {
+		createFeatureButton(issueBodyDom, featureId ? "edit": "add", "w-100 mb-1 dropup", {
 			noteid: "note/"+issue.properties.id,
 			osmid: featureId,
 			tags,
