@@ -57,7 +57,9 @@ div.row
 		div.spinner-charts.spinner-border.text-primary(role="status" style="width: 64px; height: 64px")
 		canvas#stats-chart-keys.w-100(height="300")
 
-script.
+script(type="module").
+	import * as maplibregl from "/lib/maplibre-gl/maplibre-gl.mjs";
+	
 	const projectDays = !{JSON.stringify(days)};
 	function showStatistics() {
 		const numberFormat = new Intl.NumberFormat();
