@@ -47,30 +47,33 @@ fs.readdirSync(PROJECTS_PATH).forEach(projectDir => {
 					};
 					project.osmoseButtons[`${ds.item}_${ds.class || "all"}`] = ds.buttons;
 				});
-			project.idParams = queryParams(Object.assign({}, project.editors.all, project.editors.iD));
-			project.josmParams = queryParams(Object.assign({ changeset_comment: project.editors.all.comment, changeset_hashtags: project.editors.all.hashtags.split(",").join(" #") }, project.editors.JOSM));
 
-			// Replace NSI editors fields by actual value
-			if (project.editors && project.editors.pdm && project.editors.pdm.fields) {
-				project.editors.pdm.fields.map(async (f, id) => {
-					if (f.type === "nsi") {
-						const nsi = await (await fetch(`https://github.com/osmlab/name-suggestion-index/raw/main/data/${f.path}.json`)).json();
-						f.type = "select";
-						f.tag = "_select" + id;
+			if (project.editors){
+				project.idParams = queryParams(Object.assign({}, project.editors.all, project.editors.iD));
+				project.josmParams = queryParams(Object.assign({ changeset_comment: project.editors.all.comment, changeset_hashtags: project.editors.all.hashtags.split(",").join(" #") }, project.editors.JOSM));
 
-						f.values = nsi.items
-							.filter(it => !f.locationSet || !it.locationSet || !it.locationSet.include || it.locationSet.include.includes("001") || it.locationSet.include.includes(f.locationSet))
-							.map(it => ({
-								l: it.displayName,
-								tags: it.tags
-							}));
+				// Replace NSI editors fields by actual value
+				if(project.editors.pdm && project.editors.pdm.fields) {
+					project.editors.pdm.fields.map(async (f, id) => {
+						if (f.type === "nsi") {
+							const nsi = await (await fetch(`https://github.com/osmlab/name-suggestion-index/raw/main/data/${f.path}.json`)).json();
+							f.type = "select";
+							f.tag = "_select" + id;
 
-						delete f.path;
-						delete f.locationSet;
-					}
+							f.values = nsi.items
+								.filter(it => !f.locationSet || !it.locationSet || !it.locationSet.include || it.locationSet.include.includes("001") || it.locationSet.include.includes(f.locationSet))
+								.map(it => ({
+									l: it.displayName,
+									tags: it.tags
+								}));
 
-					return f;
-				});
+							delete f.path;
+							delete f.locationSet;
+						}
+
+						return f;
+					});
+				}
 			}
 			projects[project.name] = project;
 		} else if (!project.links?.external_statistics) {
@@ -84,4 +87,20 @@ fs.readdirSync(PROJECTS_PATH).forEach(projectDir => {
 	}
 });
 
-module.exports = { projects_including_external, projects };
+// Projects init list
+const projects_init_list = Array(Object.keys(projects).length);
+let lastSlot = -1;
+Object.values(projects).forEach (project => {
+	if (project.hasOwnProperty("init_slot")){
+		if (projects_init_list[project.init_slot-1] != null){
+			projects_init_list.splice(project.init_slot-1, 0, project.name);
+		}else{
+			projects_init_list[project.init_slot-1] = project.name;
+		}
+		lastSlot = Math.max(lastSlot, project.init_slot-1);
+	}else{
+		projects_init_list[lastSlot+1] = project.name;
+	}
+});
+
+module.exports = { projects_including_external, projects, projects_init_list };
