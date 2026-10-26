@@ -1,21 +1,21 @@
 -- Insert unknown members in table
-WITH features as (
-  select osmid, version from :features_table
+WITH referenced as (
+  select osmid, version from :referenced_table
   union
-  select osmid, version from :features_table_update
+  select osmid, version from :referenced_table_update
 ), unknown as (
   -- Finding osmid of referenced members that are not known in features
   select m.memberid as osmid
   from :members_table m 
-  left join features f ON f.osmid=m.memberid
-  where f.version is null
+  left join referenced r ON r.osmid=m.memberid
+  where r.version is null
 
   union
 
-  -- Fiding osmid of known live features that are not known as features
+  -- Finding osmid of known live features that are not known as features
   select l.osm_id as osmid
   from :live_table l
-  left join features u ON u.osmid= l.osm_id
+  left join referenced u ON u.osmid= l.osm_id
   where u.version is null
 ), missing as (
   select distinct u.osmid as osmid

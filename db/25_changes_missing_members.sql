@@ -1,14 +1,14 @@
--- Insert unknown members in table
-WITH features as (
-  select osmid, version from :features_table
+-- Get missing referenced features according to members
+WITH referenced as (
+  select osmid, version from :referenced_table
   union
-  select osmid, version from :features_table_update
+  select osmid, version from :referenced_table_update
 ), missing as (
   -- Finding osmid of referenced members that are not known in features
   select distinct m.memberid as osmid
   from :members_table m 
-  left join features f ON f.osmid=m.memberid
-  where f.version is null
+  left join referenced r ON r.osmid=m.memberid
+  where r.version is null
 )
 
 select 

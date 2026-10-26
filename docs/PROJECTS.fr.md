@@ -1,0 +1,483 @@
+# Construire un projet dans Podoma
+
+Chaque projet est défini via un sous-répertoire de `projects`. Chaque sous-répertoire doit contenir les fichiers suivants :
+
+- `info.json` : métadonnées du projet
+- `howto.md` : descriptif des tâches à réaliser au format Markdown (utiliser les niveaux de titres >= 3)
+- `contribs.sql` : Script SQL contenant des requêtes UPDATE sur la table pdm_features, attribuant des classes de contribution à certains changements donnant droit à des points
+- `extract.sh` : Script optionnel qui produit un fichier csv des données actuelles produites par le projet, proposé au téléchargement dans l'interface.
+
+Les propriétés dans `info.json` sont les suivantes :
+
+- `id` : identifiant numérique entier unique
+- `name` : identifiant de la mission (caractères autorisés : A-Z, 0-9, \_ et -)
+- `title` : nom de la mission (assez court)
+- `init_slot` : Rang d'initialisation, à partir de 1
+- `start_date` : date de début de la mission (format AAAA-MM-JJ)
+- `soft_start_date` : date de début de la période de _forte_ animation communautaire (format AAAA-MM-JJ). Ignorée sauf si `use_soft_dates` est activé. La collecte des données commence toujours à `start_date`.
+- `soft_end_date` : date de fin de la période de _forte_ animation communautaire (format AAAA-MM-JJ). Ignorée sauf si `use_soft_dates` est activé. La collecte des données se poursuit toujours jusqu'à `end_date`.
+- `use_soft_dates` : utiliser `soft_start_date` et `soft_end_date` (au lieu de `start_date` et `end_date`) pour déterminer si ce projet est passé, en cours ou à venir, et pour délimiter la période sur laquelle les points, le classement et les badges sont calculés. Sa modification n'est prise en compte qu'au prochain `update_changes` et ne s'applique aux décomptes de contributeurs que pour les dates traitées après la modification.
+- `end_date` : date de fin de la mission (format AAAA-MM-JJ)
+- `summary` : résumé de la mission
+- `links` : objet contenant une ou plusieurs URL vers des pages tierces
+  - `osmwiki` : wiki OSM
+  - `osmforum` : forum OSM
+  - `osmblog` : page de blog OSM
+  - `external_statistics` : page externe pour les statistiques, si elle est renseignée elle sera utilisée À LA PLACE des statistiques intégrées
+- `database.osmium_tag_filter` : filtre Osmium sur les tags à appliquer pour ne conserver que les objets OSM pertinents (par exemple `nwr/*:covid19`, [syntaxe décrite ici](https://osmcode.org/osmium-tool/manual.html#filtering-by-tags)). Il est possible d'enchaîner plusieurs filtres par & et en répétant l'indication de primitive à chaque niveau. L'opérateur != n'est pour l'instant pas pris en compte.
+- `database.imposm` : configuration pour l'import des données actualisées d'OSM (`types` pour les types de géométrie à prendre en compte, `mapping` pour les attributs, voir [la documentation Imposm](https://imposm.org/docs/imposm3/latest/mapping.html#tags) pour le format de ces champs)
+- `database.compare` : configuration pour la recherche d'objets OpenStreetMap à comparer, suit le format de `database.imposm` avec une propriété supplémentaire `radius` (rayon de rapprochement en mètres)
+- `database.labels` : Objet de définition d'étiquettes attribuées aux versions d'objets en fonction de leurs tags. Chaque étiquette est associée au path JSON utilisé par la fonction [jsonb_path_exists](https://www.postgresql.org/docs/current/functions-json.html#FUNCTIONS-JSON-PROCESSING-TABLE) utilisée sur la chaine de tags. Exemple `"labels":{"etiquette1":"$ ? (@.substation==\"transmission\")"}` pour attribuer `etiquette1` à tous les objets portant le tags `substation=transmission`. Voir ci-dessous à propos du filtrage
+- `database.live` : Active les traitements qui s'appuient sur la présence d'une table tenue à jour en live, par imposm ou tout autre processus (voir remplacer imposm ci-dessous).
+- `database.members_from` : Nom d'un autre projet qui fourni les membres des objets analysés par ce projet-ci. Permet de réduire la taille de la base de données dans le cas d'une analyse noeuds/chemins imbriqués.
+- `datasources` : liste des sources de données qui apparaissent sur la page (voir ci-dessous)
+- `teams` : liste d'équipes utiles à la construction des statistiques et définies par leur nom correspondant à un tableau de noms d'utilisateurs OSM.
+- `statistics` : configuration de l'affichage des statistiques sur la page du projet
+- `statistics.count` : activer le comptage des objets du projet
+- `statistics.length` : activer les mesures de longueurs et de surface des objets du projet. Oblige à réinitialiser le projet en cas de changement.
+- `statistics.labels` : Active la classification des contributions sur les étiquettes. En conséquence, des points de contribution seront aussi attribués aux utilisateurs en fonction des étiquettes.
+- `statistics.feature_name` : nom à afficher à l'utilisateur pour ces objets
+- `statistics.osmose_tasks` : nom des tâches accomplies via Osmose
+- `statistics.points` : configuration des points obtenus selon la contribution au projet (en lien avec `contribs.sql`). `{"add":1, "edit":2}`
+- `statistics.points_labels` : configuration des points obtenus selon la contribution sur un label précis (en lien avec `contribs.sql`). `{"label1": {"add":1, "edit":2}}`
+- `editors` : configuration spécifique à chaque éditeur OSM. Pour Podoma, les informations sont disponibles ci-dessous. Pour iD, il est possible d'utiliser [les paramètres listés ici](https://github.com/openstreetmap/iD/blob/develop/API.md).
+
+## Temporalité des projets
+
+Chaque projet est muni de sa propre période temporelle d'existence qui influence les traitements à faire pour maintenir le journal des changements à jour.  
+Le script `project:update` va automatiquement choisir entre deux sources de données selon 5 configurations différentes :
+- Les fichiers OSH contenant l'ensemble de l'historique de tous les objets sur une zone géographique donnée. Ils sont mis à jour chaque mois.
+- Les fichiers différentiels journaliers qui contiennent l'ensemble des modifications réalisées chaque jour dans le monde.
+
+Podoma permet la mise à jour au fil de l'eau et la reconstruction complète de l'historique d'un projet terminé. La seconde possibilité est particulièrement utile en cas de changement de périmètre ou d'amélioration des techniques de comptage.  
+Un projet peut ne pas avoir de date de fin, en utilisant `end_date: null` dans sa configuration, pour un suivi sans limite de temps.
+
+![Ligne de temps des projets](./projects_process.svg)
+- Cas 1 : un projet suffisament ancien se tenant complètement dans la période temporelle du fichier OSH de sa zone, n'ayant pas besoin de mises à jour mais pouvant être réinitialisé à la demande.
+- Cas 2 : un projet ancien sans date de fin, trop rarement mis à jour et nécessitant une réinitialisation pour retrouver un état actuel.
+- Cas 3 : un projet ancien sans date de fin, mis à jour au cours des 30 derniers jours et éligible à un complément via les fichiers de diff journaliers jusqu'à la date actuelle.
+- Cas 4 : un projet ancien se terminant dans le futur, qui utilisera donc les données OSH puis les diffs journaliers jusqu'à la date courante.
+- Cas 5 : un projet commencé récemment et se terminant dans le futur, régulièrement mis à jour et éligible à la mise à jour via les fichiers diffs.
+- Cas 6 : un projet non commencé, n'entrainant pour l'instant aucun traitement.
+
+## Filtrer les objets
+
+![Logique de filtrage des projets](./projects_labels.svg)
+Un projet peut se décomposer selon les constituants ci-dessus : le filtre de périmètre accumule les objets qui s'y conforment et les étiquettes permettent ensuite de qualifier finement chaque version.
+
+### Périmètre
+Podoma s'appuie sur Osmium et Imposm pour filtrer les objets concernés par les projets configurés, au moyen des clés de configuration `database.osmium_tag_filter` et `database.imposm`.
+
+Le filtre de périmètre doit être suffisament sélectif pour traiter des quantités d'objets raisonnables. Il doit aussi être suffisament large pour tenir compte de multiples variations des tags OSM pour un même sujet. Il est recommandé de se concentrer ici sur les tags principaux et de définir des étiquettes (voir ci-dessous) pour affiner la catégorisation.
+
+La documentation de la syntaxe des filtres Osmium est décrite dans [la documentation de l'outil](https://docs.osmcode.org/osmium/latest/osmium-tags-filter.html). Néanmoins, en raison de la nécessité d'appliquer ces filtres à plusieurs l'endroits dans le processus de sélection, y compris en dehors d'osmium, les filtres mobilisant l'opérateur `!=` ne sont pas supportés.
+
+### Étiquetage
+Afin de compléter les fonctionnalités de filtrage décrites ci-dessus, Podoma permet d'assigner des étiquettes à chaque version des objets considérés par le projet en fonction de leurs tags.  
+Chaque version peut recevoir 0, 1 ou plusieurs étiquettes en fonction des tags. Tant et si bien que chaque étiquette peut couvrir tout ou partie de la population du projet.
+
+Ces étiquettes servent ensuite dans les dénombrements et distinguent les différentes populations. C'est ainsi qu'il est utile de considérer un périmètre large et de définir différentes étiquettes pour dénombrer les objets qui nous intéressent et ceux incomplets qu'il conviendrait de compléter par exemple.
+
+La syntaxe qui permet de les définir est basée sur le [SQL/JSON de Postgresql](https://www.postgresql.org/docs/current/functions-json.html#FUNCTIONS-SQLJSON-PATH) qui permet une grande souplesse et supporte les types. On considère par exemple les possibilités suivantes pour les définir :
+
+```json
+"labels":{
+  "label1":"$.char_key",
+  "label2":"$ ? (@.\"char:key\" == \"value\")",
+  "label3":"$ ? (@.numeric_key < 20000)",
+  "label4":"$.numeric_array_key ? (@ < 20000)",
+  "label5":"$ ? (@.numeric_array_key[*] > 10000 && @.char_key != \"value\")",
+  "label6":"$ ? (@.numeric_array_key[*] > 10000 && !exists(@.char_key_unknown))"
+}
+```
+
+L'attribution des étiquettes est réalisé durant la phase `update_changes`. Seule une réinitialisation de cette phase permet de réviser naturellement la population de versions concernée par une modification des définitions.  
+La classification des contributions sur les étiquettes n'est réalisées que si `statistics.labels` vaut `true` dans le projet.
+
+Toutefois, il est possible manuellement de supprimer puis attribuer à nouveau une étiquette `label1` donnée, par les quatre commandes suivantes :
+
+```bash
+psql -d postgresql://... -c "DELETE FROM pdm_features_project_labels WHERE label='label1'"
+psql -d postgresql://... -v features_table="pdm_features_project" -v labels_table="pdm_features_project_labels" -v label="'label1'" -v labelfilter="'... new label filer ...'" -f "db/27_changes_labels.sql"
+psql -d postgresql://... -v features_table="pdm_features_project" -v labels_table="pdm_features_project_labels" -f "db/27_changes_labels_contrib.sql"
+```
+
+La phase `update_projects` devra ensuite être réinitialisée à son tour pour prendre en compte les nouveaux dénombrements.
+
+### Membres distants
+Les projets impliquant des chemins ou des relations vont également stocker leurs membres, principalement pour reconstruire les géométries correspondantes. Les noeuds sont effectivement nécessaires pour connaître la longueur d'un chemin ou la surface d'un polygone.
+
+En fonction du domaine d'étude, il n'est pas inhabituel d'observer la contribution sur des chemins et sur leurs noeuds membres. Ainsi, stocker deux fois les membres serait inefficace.
+
+![Mutualisation du stockage des noeuds entre deux projets voisins](./projects_reference.svg)
+
+Podoma permet de référencer les membres depuis un projet différent afin d'éviter la duplication du stockage. Il assure le dédoublonnage des membres avant leur stockage dans la table distante, en dehors du périmètre du projet. Cela ne perturbera donc pas le calcul des statistiques.  
+Utilisez `database.members_from` pour indiquer le nom du projet distant depuis lequel les membres peuvent être référencés.
+
+Pour utiliser cette fonctionnalité, n'oubliez pas de planifier l'initialisation de vos projets en conséquence, en définissant la propriété `init_slot`. Les projets distants depuis lesquels les members sont obtenus doivent être initialisés avant tout le reste, avec un rang plus faible que tous les autres projets.
+
+### Objets manquants
+Tel que décrit ci-dessus, Podoma exploite les diff quotidiens pour tenir les projets à jour.  
+Ces diffs ne contiennent que les objets modifiés, si bien que lorsqu'un chemin ou une relation y figurent, nous n'y trouvons pas leurs membres. Plus encore, ces diffs ne peuvent être filtrés que lorsque des noeuds sont présents dans la zone géographique voulue.
+Cela peut finalement poser des problèmes quand ces objets référencent des membres qui ne sont pas encore présents dans la base de données ou bien que seul un chemin ou qu'une relation a été modifiée sans qu'aucun noeud ne le soit.
+
+Podoma ne conservant pas d'autres objets que ceux nécessaires aux projets, il est nécessaire de vérifier à chaque mise à jour si des objets manquants doivent être récupérés.  
+Overpass API est utilisé pour les projets qui le nécessitent pour retrouver ces objets. Une requête est envoyée pour récupérer l'ensemble des noeuds, chemins et relations manquants ainsi que leurs déscendants pour tenir compte de la récursivité. Ainsi une requête portant sur 10 objets manquants pourra mener à une nombre de résultats plus important.
+
+Ces objets sont ensuite traités en même temps que ceux obtenus de l'analyse des diffs, ce processus complète les fichiers temporaires sans particularisme.
+
+Pour désactiver cette fonctionnalité, vous devez définir le paramètre `OVERPASS_URL` à `null` dans votre fichier de configuration.  
+* Aucune configuration supplémentaire n'est nécessaire pour traiter les membres des chemins ou relations
+* `database.live` doit être à `true` pour permettre de rechercher des objets manquants depuis une table tenue à jour en live.
+
+Ces deux modes sont combinés. Une seule requête à Overpass ne sera envoyée à chaque tentative.
+
+### Qualification des contributions
+Podoma met en place une qualificiation des contributions plus fine à partir des 3 catégories du format [OsmChange](https://wiki.openstreetmap.org/wiki/OsmChange) (add, modifiy, delete).  
+De plus, cette qualificiation est distincte entre les niveaux projet et étiquettes. On peut ajouter ou retirer n'importe quelle étiquette et les conserver dans le projet au cours de leur cycle de vie.
+
+Similairement aux étiquettes, la qualificiation des contributions est utile au calcul des KPI en tant que cadre général pour regrouper des contributions d'apparence très diverses selon les tags employés dans différents projets.
+
+Les contributions au projet sont qualifiées dans les tables `pdm_features_...` et dans les tables de labels pour chaque étiquette. Podoma considère généralement les catégories suivants :
+
+* Niveau projet :
+  - `add` : L'objet est créé dans OpenStreetMap et apparait d'emblée dans le projet
+  - `edit-in` : L'objet a été édité et apparaît dans le projet à partir d'une version > 1. Cela signifie que le contributeur n'a pas créé l'objet mais a réalisé une édition capitale qui a permi à l'objet de correspondre au filtre du projet.
+  - `edit` : L'objet a été édité et était déjà inclus dans le projet.
+  - `edit-out` : L'objet a été édité et n'est plus conforme au filtre du projet.
+  - `delete` : L'objet a été supprimé et n'est donc plus partie du projet.
+* Niveau étiquette :
+  - `edit-in` : L'objet a été édité et la nouvelle version a reçue l'étiquette correspondante
+  - `edit` : L'objet a été édité et était déjà muni de l'étiquette concernée
+
+Les qualificiations projet peuvent être complétées pour chaque projet en créant un script `contribs.sql` à côté de `info.json`.  
+Ce script contient des requêtes UPDATE pour changer la valeur de la colonne contrib dans les tables `pdm_features_...`. Chaque contribution ne peut avoir qu'un seul qualificatif et donc une seule quantité de points associées.
+
+## Dénombrements
+
+Le dénombrement des objets et des contributeurs est opéré sur le journal des modifications de chaque objet sélectionné par le filtre du projet. Il est activé via le drapeau `statistics.count` dans la configuration du projet.  
+Ces opérations nécessitent non seulement de connaître les dates d'existence de chaque version mais aussi l'adhérence de chacune au filtre du projet.  
+
+Il est possible de résumer les différentes configurations et leurs effets selon le schéma suivant :
+![Dénombrements au fil du temps](./projects_counts.svg)
+Certains objets ont une vie complexe et peuvent perdre et retrouver une validité dans le projet à plusieurs reprises.
+
+La plateforme établit elle-même les dates des décomptes à chaque fois que le script est executé par rapport à la date de dernière mise à jour des décomptes de chaque projet.  
+Ces dates sont sélectionnées selon les hypothèses suivantes :
+- Tous les jours à minuit jusqu'à la date de dernière mise à jour des décomptes ou du début du mois en cours
+- Chaque premier de chaque mois jusqu'à la date de dernière mise à jour des décomptes ou le début du projet
+
+En exécutant le script de calcul chaque jour, on obtiendra donc 364 valeurs à la fin d'une année complète de traitement.
+
+Les statistiques projet sont établies par le script `./db/31_projects_update_tmp.sh`. Le script complète la table SQL pdm_feature_counts avec les jours manquant entre le timestamp OSH et le jour courant.
+
+Il est possible de forcer le recomptage de l'intégralité d'un projet en supprimant le fichier de timestamp OSH, récupération des fichiers PBF/PBH et en relançant le script
+
+```bash
+rm ${WORK_DIR}/osh_timestamp
+./db/11_pbf_update_tmp.sh
+./db/31_projects_update_tmp.sh
+```
+
+### Dénombrement des objets
+
+Les dénombrements suivants sont réalisés de manière systématique :
+- Nombre d'objets existants et validant le filtre du projet à une date donnée
+- Longueur des chemins lorsque certains sont sélectionnés dans le filtre du projet
+- Surface des chemins fermés lorsque certains sont selectionnés dans le filtre du projet
+
+### Contribution des équipes
+
+![Evauation de la contribution des équipes](./team_work.svg)
+
+La contribution des équipes est pour l'instant calculée au niveau global uniquement.  
+Les dénombrements suivants sont évalués au cours d'une période de temps, entre deux dates du chronogramme ci-dessus:
+- La longueur effectivement contribuée par l'équipe, la somme des delta de longueur de chaque version attribuée à l'un des utilisateurs de l'équipe.
+- La surface effectivement contribuée par l'équipe, la somme des delta de surface de chaque version attribuée à l'un des utilisateurs de l'équipe.
+
+La figure ci-dessus tente d'illustrer la méthode de dénombrement des contributions des équpes en prenant pour exemple un chemin édité 5 fois par 3 contributeurs.  
+Actuellement, les contributions qui retirent des objets des labels ne peuvent pas être comptées. Ainsi, seules les contributions ajoutant des objets ne sont comptabilisées dans le total pour un lable donné.
+
+### Dénombrement des contributeurs
+
+Les dénombrements de contributeurs sont réalisés de manière systématique :
+- Le nombre total de contributeurs aux versions sélectionnées par le filtre du projet
+- Le nombre de contributeurs étant intervenus sur des versions sélectionnées par le filtre du projet sur une fenêtre glissante de 24 heures
+- Le nombre de contributeurs étant intervenus sur des versions sélectionnées par le filtre du projet sur une fenêtre glissante de 30 jours
+
+Il convient d'indiquer que le nombre total de contributeurs ne doit pas être interprété comme le nombre d'utilisateurs ayant contribué depuis le début d'OSM sur le sujet concerné par le projet.  
+En effet, seules les versions actives au début du projet sont sélectionnées, masquant ainsi les contributeurs ayant contribué sur des objets complètement supprimés ou sur de précédentes version.
+
+### Points et contributions
+
+Certaines contribution peuvent donner lieu à l'attribution de points aux contributeurs responsables.
+
+Les montant de points attribués sont configurés dans `info.json` :
+
+```json
+{
+  "statistics": {
+    "points": { 
+      "add": 3,
+      "project1": 1
+    },
+    "points_label": { 
+      "label1": {
+        "edit-in": 3,
+        "edit": 1
+      }, 
+      "label2": {
+        "edit-in": 3,
+        "edit": 1 
+      }
+    }
+  }
+}
+```
+
+Les points sont distingués entre les contributions au niveau du projet et de chaque étiuette.
+
+Les points ne sont comptabilisés que sur la période du projet, qui détermine le classement et les badges attribués à chaque contributeur. Cette période va de `start_date` à `end_date`, ou de `soft_start_date` à `soft_end_date` lorsque `use_soft_dates` est activé pour ce projet. Les contributions faites en dehors de celle-ci sont toujours collectées et affichées dans les statistiques, mais ne donnent aucun point.
+
+## Sources de tuiles
+
+Plusieurs sources de tuiles sont mobilisables, et sont à faire apparaître dans le champ `datasources` du fichier `info.json`.
+
+### Osmose
+
+[Osmose](https://wiki.openstreetmap.org/wiki/Osmose) est un outil d'analyse qualité et d'aide à l'intégration de données ouvertes. Les propriétés à renseigner sont les suivantes :
+
+- `source` (obligatoire `osmose`): type de source
+- `item` : numéro d'item (code à quatre chiffres)
+- `class` (optionnel) : numéro de classe (code à plusieurs chiffres)
+- `country` (optionnel) : motif de nom de pays Osmose (exemple `france*`)
+- `name` : nom à faire apparaître à l'utilisateur
+- `subtitles` (optionnel) : objet clé > valeur pour remplacer les sous-titres des signalements Osmose (recherche par motif)
+- `buttons` : libellé à faire apparaître sur les boutons d'édition (exemple `{ "done": "C'est fait", "false": "Rien ici" }`)
+- `minzoom` (défaut 7): Niveau de zoom minimum au delà duquel la couche est visible
+- `maxzoom` (défaut 18): Niveau de zoom maximal au delà duquel la couche n'est plus visible
+- `tiles` (défaut) : Liste d'URL TMS
+
+### Notes OSM
+
+Les [notes OpenStreetMap](https://wiki.openstreetmap.org/wiki/Notes) sont une méthode simple pour envoyer des commentaires textuels par dessus la carte, et faciliter la contribution par des publics novices. Les propriétés à renseigner sont les suivantes :
+
+- `source` (obligatoire `notes`): type de source
+- `name` : nom à faire apparaître à l'utilisateur
+- `description` : texte descriptif indiquant la méthode de résolution d'une note
+- `terms` : liste des termes à rechercher dans les notes (au singulier)
+- `buttons` : libellé à faire apparaître sur les boutons d'édition (exemple `{ "close": "C'est fait" }`)
+- `data` (défaut) : GeoJson de données de la couche
+
+### Objets OpenStreetMap
+
+Les objets actuellement présents dans OpenStreetMap peuvent être affichés pour éviter les doublons et permettre leur édition. Les propriétés à renseigner sont les suivantes :
+
+- `source` (obligatoire `osm`): type de source
+- `name` : nom à faire apparaître à l'utilisateur
+- `description` : texte descriptif de l'objet affiché
+- `minzoom` (défaut 7) : Niveau de zoom minimum au delà duquel la couche est visible
+- `maxzoom` (défaut 14) : Niveau de zoom maximal au delà duquel la couche n'est plus visible
+- `tiles` (défaut) : Liste d'URL TMS
+- `layers` (défaut) : Liste des layers correspondant à `tiles` à utiliser
+
+Cette source ne peut apparaître qu'une seule fois, et correspond aux objets recherchés dans les options `database` de `info.json`.
+
+### Objets OpenStreetMap pour comparaison
+
+Des objets indirectement liés au projet mais pertinents pour la contribution peuvent également apparaître. Les propriétés à renseigner sont les suivantes :
+
+- `source` (obligatoire `osm-compare`) : type de source
+- `name` : nom à faire apparaître à l'utilisateur
+- `description` : texte descriptif de l'objet affiché
+- `minzoom` (défaut 9) : Niveau de zoom minimum au delà duquel la couche est visible
+- `maxzoom` (défaut 14) : Niveau de zoom maximal au delà duquel la couche n'est plus visible
+- `tiles` (défaut) : Liste d'URL TMS
+- `layers` (défaut) : Liste des layers correspondant à `tiles` à utiliser
+
+Cette source ne peut apparaître qu'une seule fois, et correspond aux objets recherchés dans les options `database.compare` de `info.json`.
+
+### Objets OpenStreetMap supplémentaires
+
+Ces couches affichent des objets non pris en compte dans le périmètre du projet. Ils sont affichés pour informer les contributeurs que quelque chose de différent existe déjà à cet endroit. Les propriétés à fournir sont les suivantes :
+
+- `source` (obligatoire `osm-extra`) : type de source
+- `name` : nom à faire apparaître à l'utilisateur
+- `description` : texte descriptif de l'objet affiché
+- `minzoom` (défaut 9) : Niveau de zoom minimum au delà duquel la couche est visible
+- `maxzoom` (défaut 14) : Niveau de zoom maximal au delà duquel la couche n'est plus visible
+- `tiles` (défaut) : Liste d'URL TMS
+- `layers` (défaut) : Liste des layers correspondant à `tiles` à utiliser
+
+Ces sources peuvent apparaitre autant de fois que nécessaire
+
+### Fonds raster
+
+Des couches raster peuvent être ajoutées en fond de carte pour faciliter la contribution ou donner plus de contexte. Les propriétés suivantes doivent être définies :
+
+- `source` (obligatoire `background`): type de source
+- `icon` (défaut `other`): le symbole à afficher dans la légende (au choix `aerial`, `thematic`, `picture`, `other`)
+- `name` : nom à faire apparaître à l'utilisateur
+- `tiles` : Tableau d'URL TMS
+- `attribution` : Attribution à faire apparaitre sur la carte
+- `minzoom` (défaut 2) : Niveau de zoom minimum au delà duquel la couche est visible
+- `maxzoom` (défaut 19) : Niveau de zoom maximal au delà duquel la couche n'est plus visible
+- `tileSize` (défaut 256) : Taille d'une arrête de tuile en pixels
+
+Ces sources doivent être déclarées dans l'ordre inverse d'apparition. La couche inférieure doit être donnée en premier.
+Les urls des fonds raster sont disponibles sur ce dépôt https://github.com/osmlab/editor-layer-index
+
+### Sources stats
+
+Pour activer l'affichage de statistiques selon le découpage administratif, vous pouvez ajouter la couche ayant la définition suivante :
+
+- `source` (obligatoire `stats`): type de source
+- `minzoom` (défaut 2) : Niveau de zoom minimum au delà duquel la couche est visible
+- `maxzoom` (défaut 14) : Niveau de zoom maximal au delà duquel la couche n'est plus visible
+- `tiles` (défaut) : Tableau d'URL TMS
+- `layers` (défaut) : Liste des layers correspondant à `tiles` à utiliser
+
+## Éditeur intégré
+
+La configuration des projets permets de personnaliser les champs disponibles dans l'éditeur intégré. La configuration s'exprime en JSON comme l'exemple suivant (ajouté dans l'objet `editors` du fichier `config.json`) :
+
+```json
+"pdm": {
+  "fields": [
+    ... liste de champs...
+  ],
+  "title": {
+    "add": "Libellé de l'action ajouter",
+    "edit": "Libellé de l'action éditer"
+  }
+}
+```
+
+Les champs sont définis comme des objets JSON standards, ajouté au tableau `fields` ci-dessus.
+
+Chaque type, à l'exception de `hidden` supporte les champ communs suivants :
+
+- `name`: Libellé du champ tel qu'affiché à l'utilisateur
+- `help`: Lien hypertexte pointant vers toute ressource appropriée d'aide pour ce champ
+- `description`: Un text plus long que le libellé qui apporte les détails nécessaire à propos de champ
+- `optional`: Un champ booléen false/true rendant respectivement le champ obligatoire ou non.
+
+### Attributs statiques ou externes
+
+Il permet de définir des tags statiques ajoutés à tout objet créé avec l'éditeur. Il est possible dans la liste de tags d'ajouter une valeur `*` pour accepter toute valeur arrivant d'une source externe (par exemple les identifiants `ref:FR:SIRET` renseignés dans Osmose).
+
+```json
+{ "type": "hidden", "tags": { "tag_1": "value_1", "tag_2": "value_2", "tag_3_externe": "*" } }
+```
+
+### Champs classiques
+
+Les champs textuels simples sont couverts par 3 types différents : `text`, `number` ou `email`.
+Ils produisent tous trois un champ texte standard muni des fonctions de validation appropriées.
+
+```json
+  { "type": "text", "name": "Libellé", "tag": "tag_key", "optional": false },
+  { "type": "number", "name": "Libellé", "tag": "tag_key", "optional": false },
+  { "type": "email", "name": "Libellé", "tag": "tag_key", "optional": false }
+```
+
+### Zone de texte
+
+Une zone de texte plus ample pour saisir des valeurs plus conséquentes.
+
+```json
+{ "type": "textarea", "name": "Libellé", "tag": "tag_key", "optional": false }
+```
+
+### Listes de valeurs
+
+Une liste de valeurs avec des entrées personnalisées pointant sur une clé OSM définie.
+
+```json
+{
+  "type": "select",
+  "name": "Libellé",
+  "tag": "tag_key",
+  "optional": false,
+  "values": [
+    { "v": "value_1", "l": "Value 1 label" },
+    { "v": "value_2", "l": "Value 2 label" }
+  ]
+}
+```
+
+On peut également faire en sorte que une valeur dans la liste renseigne plusieurs attributs OSM, par exemple :
+
+```json
+{
+  "type": "select",
+  "name": "Type",
+  "tag": "_select1",
+  "values": [
+    {
+      "l": "Gendarmerie",
+      "tags": { "name": "Gendarmerie nationale", "operator": "Gendarmerie nationale", "police:FR": "gendarmerie" }
+    },
+    {
+      "l": "Police nationale",
+      "tags": { "name": "Police nationale", "operator": "Police nationale", "police:FR": "police" }
+    },
+    { "l": "Police municipale", "tags": { "name": "Police municipale", "police:FR": "police_municipale" } }
+  ]
+}
+```
+
+Dans le cas où plusieurs attributs sont renseignés, il est possible de forcer la suppression de certains tags avec un texte vide, par exemple pour gérer le cas où les objets sont dans plusieurs catégories :
+
+```json
+{
+  "type": "select",
+  "name": "Type de commerce",
+  "tag": "_select1",
+  "values": [
+    { "l": "Agence d'assurance", "tags": { "shop": "", "office": "insurance" } },
+    { "l": "Agence de voyages", "tags": { "shop": "travel_agency", "office": "" } }
+  ]
+}
+```
+
+### Champs booléens
+
+Les champs booléens à 2 ou 3 états utilisent les boutons radio pour proposer des options à l'utilisateur vers une clé OSM définie.
+`2states` pour oui/inconnu et `3states` pour oui/non/inconnu.
+
+```json
+  { "type": "2states", "name": "Libellé", "tag": "tag_key"},
+  { "type": "3states", "name": "Libellé", "tag": "tag_key"}
+```
+
+### Opérateurs et enseignes
+
+Pour faciliter la sélection d'une enseigne ou d'un réseau de commerces/équipements, le champ de type `nsi` (pour [Name Suggestion Index](https://nsi.guide/), un recensement collaboratif des marques et enseignes) peut être utilisé. Celui-ci dispose d'options spécifiques :
+
+- `path` : chemin vers la liste à utiliser (elle apparaît en titre du site web, par exemple `brands/shop/coffee`)
+- `locationSet` : un code pays sur deux lettres, en minuscules, pour ne lister que les enseignes du pays concerné (optionel)
+
+Exemple d'utilisation :
+
+```json
+{ "type": "nsi", "name": "Marque", "path": "brands/shop/bakery", "locationSet": "fr" }
+```
+
+### Icones groupées
+
+Les champs icones permettent de sélectionner des attributs selon une apparence bien connue, par exemple les connecteurs sur les points de charge pour véhicules électriques. Les icones doivent être stockés dans le répertoire `/website/images/form` en tant que fichiers png. Les étiquettes associées à chaque icone sont attribuées à l'objet lorsque l'utilisateur sélectionne l'un d'entre eux.
+
+```json
+{
+  "type": "icons",
+  "name": "Available sockets",
+  "tag": "_socket",
+  "values": [
+    { "icon": "socket_typee", "label": "TE", "tags": { "socket:typee": "yes" } },
+    { "icon": "socket_type2", "label": "T2", "tags": { "socket:type2": "yes" } },
+    { "icon": "socket_type2_combo", "label": "T2 Combo", "tags": { "socket:type2_combo": "yes" } },
+    { "icon": "socket_chademo", "label": "Chademo", "tags": { "socket:chademo": "yes" } }
+  ]
+}
+```
