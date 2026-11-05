@@ -361,6 +361,7 @@ app.get("/projects/:name/stats", (req, res) => {
               fill: false,
               borderColor: ds.color || "#c62828",
               lineTension: 0,
+              yAxisID: "yOsmose",
             }))
             .catch(e => {
               console.error(e);

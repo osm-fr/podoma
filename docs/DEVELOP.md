@@ -125,6 +125,7 @@ The properties in `info.json` are as follows:
 - `statistics.labels` : enable contribution classification in labels tables. As a consequence, it produces users contribution on labels too.
 - `statistics.feature_name`: name to display to the user for these objects
 - `statistics.osmose_tasks`: name of the tasks performed via Osmose
+- `statistics.osmose_separate_axis` (optional, default `false`): if `true`, the progress chart shows Osmose issue counts on their own Y axis (on the right) instead of sharing the feature counts axis. Each axis is titled and colored like its legend entry. If `false`, both share one axis, which switches to a logarithmic scale while less than 30% of Osmose tasks are done.
 - `statistics.points`: configuration of the points obtained when contributing to the project (in relation with `contribs.sql`). `{"add":1, "edit":2}`
 - `statistics.points_labels`: configuration of the points obtained when contributing to a given label (in relation with `contribs.sql`). `{"label1": {"add":1, "edit":2}}`
 - `editors`: specific configuration to each OSM editor. Podoma is described below, for iD, it is possible to use [the parameters listed here](https://github.com/openstreetmap/iD/blob/develop/API.md).
