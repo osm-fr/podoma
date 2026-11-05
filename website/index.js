@@ -7,7 +7,6 @@ const cors = require("cors");
 const compression = require("compression");
 const path = require("path");
 const fs = require("fs");
-const fetch = require("node-fetch").default;
 const { projects_including_external, projects } = require("./projects");
 const CONFFILE = require("../config.json");
 const PCKGE = require("../package.json");
@@ -18,6 +17,7 @@ const {
   getBadgesDetails,
   getOsmToUrlMappings,
   getProjectDays,
+  cachedFetchJson,
 } = require("./utils");
 const {
   promise_lastUpdate,
@@ -51,6 +51,8 @@ const i18n = new I18n({
   defaultLocale: "en",
   retryInDefaultLocale: true,
 });
+
+const OSMOSE_CACHE_TTL_MS = 1000 * 60 * 60 * 6;
 
 /*
  * Promises management
@@ -345,13 +347,13 @@ app.get("/projects/:name/stats", (req, res) => {
           const params = {
             item: ds.item,
             class: ds.class,
-            start_date: startDate,
+            start_date: p.start_date,
             country: ds.country,
           };
-          return fetch(
+          return cachedFetchJson(
             `${CONFIG.OSMOSE_URL}/fr/issues/graph.json?${queryParams(params)}`,
+            OSMOSE_CACHE_TTL_MS,
           )
-            .then((res) => res.json())
             .then((res) => ({
               label: ds.name,
               data: Object.entries(res.data)
@@ -361,6 +363,7 @@ app.get("/projects/:name/stats", (req, res) => {
               fill: false,
               borderColor: ds.color || "#c62828",
               lineTension: 0,
+              yAxisID: "yOsmose",
             }))
             .catch(e => {
               console.error(e);

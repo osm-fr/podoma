@@ -418,11 +418,49 @@ script(type="module").
 
 			// Evolution chart
 			if(res.chart?.length) {
+				const scales = {
+					x: {
+						type: 'time',
+						bounds: 'ticks',
+						time: {
+							tooltipFormat: "DD/MM/YYYY",
+							displayFormats: { day: dateFmt },
+							round: "day",
+							unit: "day"
+						}
+					}
+				};
+
+				// Feature counts and Osmose issue counts can have very different magnitudes.
+				// With statistics.osmose_separate_axis each gets its own Y axis (counts on
+				// the left, Osmose on the right), titled and colored like its legend entry;
+				// otherwise they share one axis, switching to log scale when few tasks are done.
+				const separateOsmoseAxis = "#{statistics && statistics.osmose_separate_axis || ''}" === "true";
+				if(separateOsmoseAxis) {
+					const osmoseDatasets = res.chart.filter(ds => ds.yAxisID === "yOsmose"),
+						countDatasets = res.chart.filter(ds => ds.yAxisID === "y"),
+						yAxeFor = (datasets, position, title) => {
+							const color = datasets[0]?.borderColor;
+							return {
+								...yAxeLinear,
+								position,
+								display: datasets.length > 0,
+								title: { display: true, text: title, color },
+								ticks: { ...yAxeLinear.ticks, color },
+								grid: { drawOnChartArea: position === "left" || countDatasets.length === 0 }
+							};
+						};
+					scales.y = yAxeFor(countDatasets, "left", countDatasets[0].label);
+					scales.yOsmose = yAxeFor(osmoseDatasets, "right", osmoseDatasets.length == 1 ? osmoseDatasets[0].label : "Osmose");
+				} else {
+					scales.y = res.pctTasksDone === undefined || parseInt(res.pctTasksDone) >= 30 ? yAxeLinear : yAxeLogarithmic;
+				}
+
 				const ctx = document.getElementById("stats-chart").getContext("2d");
 				const myChart = new Chart(ctx, {
 					type: "line",
 					data: {
-						datasets: res.chart
+						datasets: separateOsmoseAxis ? res.chart : res.chart.map(ds => ({ ...ds, yAxisID: "y" }))
 					},
 					options: {
 						responsive: true,
@@ -431,19 +469,7 @@ script(type="module").
 							annotation: annotationOpts,
 							zoom: zoomOpts,
 						},
-						scales: {
-							x: {
-								type: 'time',
-								bounds: 'ticks',
-								time: {
-									tooltipFormat: "DD/MM/YYYY",
-									displayFormats: { day: dateFmt },
-									round: "day",
-									unit: "day"
-								}
-							},
-							y: res.pctTasksDone === undefined || parseInt(res.pctTasksDone) >= 30 ? yAxeLinear : yAxeLogarithmic
-						}
+						scales
 					}
 				});
 			} else {
