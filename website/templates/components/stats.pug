@@ -439,23 +439,23 @@ script(type="module").
 				if(separateOsmoseAxis) {
 					const osmoseDatasets = res.chart.filter(ds => ds.yAxisID === "yOsmose"),
 						countDatasets = res.chart.filter(ds => ds.yAxisID === "y"),
-						yAxeFor = (datasets, position) => {
+						yAxeFor = (datasets, position, title) => {
 							const color = datasets[0]?.borderColor;
 							return {
 								...yAxeLinear,
 								position,
 								display: datasets.length > 0,
-								title: { display: true, text: datasets.map(ds => ds.label).join(", "), color },
+								title: { display: true, text: title, color },
 								ticks: { ...yAxeLinear.ticks, color },
 								grid: { drawOnChartArea: position === "left" || countDatasets.length === 0 }
 							};
 						};
-					scales.y = yAxeFor(countDatasets, "left");
-					scales.yOsmose = yAxeFor(osmoseDatasets, "right");
+					scales.y = yAxeFor(countDatasets, "left", countDatasets[0].label);
+					scales.yOsmose = yAxeFor(osmoseDatasets, "right", osmoseDatasets.length == 1 ? osmoseDatasets[0].label : "Osmose");
 				} else {
 					scales.y = res.pctTasksDone === undefined || parseInt(res.pctTasksDone) >= 30 ? yAxeLinear : yAxeLogarithmic;
 				}
-				
+
 				const ctx = document.getElementById("stats-chart").getContext("2d");
 				const myChart = new Chart(ctx, {
 					type: "line",
