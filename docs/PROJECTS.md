@@ -12,7 +12,7 @@ The properties in `info.json` are as follows:
 - `id`: Unique integer identifier
 - `name`: mission identifier (authorized characters: A-Z, 0-9, \_ and -)
 - `title`: name of the mission (short enough)
-- `init_slot`: Initialisation rank, starting at 1
+- `process_slot`: Initialisation rank, starting at 1
 - `start_date`: start date of the mission (format YYYY-MM-DD)
 - `soft_start_date`: start date of the _strong_ community animation period (format YYYY-MM-DD). Ignored unless `use_soft_dates` is enabled. Data collection still starts at `start_date` either way.
 - `soft_end_date`: end date of the _strong_ community animation period (format YYYY-MM-DD). Ignored unless `use_soft_dates` is enabled. Data collection still runs until `end_date` either way.
@@ -117,7 +117,7 @@ So, storing members twice wouldn't be efficient.
 Podoma allows to get members from a different project as to avoid duplication of storage. It will automatically deduplicate members before storing them in the remote table, outside of the remote project's scope. It won't disrupt statistics and exports of selected features.  
 Use `database.members_from` to set the remote project name from where the members can be retrevied.
 
-To take advantage of this feature, don't forget to plan project's initialisation accordingly, by setting `init_slot` property. Remote projects that hold members must be inited before anything else, with a lower slot than other projects.
+To take advantage of this feature, don't forget to plan project's initialisation accordingly, by setting `process_slot` property. Remote projects that hold members must be inited before anything else, with a lower slot than other projects.
 
 ### Missing OpenStreetMap features
 As explained upside, Podoma uses the daily diffs to keep projects updated.  

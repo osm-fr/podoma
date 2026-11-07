@@ -1,6 +1,6 @@
 const CONFIG = require('../config.json');
 const fs = require('fs');
-const { projects, projects_init_list } = require('../website/projects');
+const { projects, projects_process_list } = require('../website/projects');
 const {Pool} = require('pg')
 
 /*
@@ -466,7 +466,7 @@ script += `
 
     `;
 
-projects_init_list.forEach(project_name => {
+projects_process_list.forEach(project_name => {
     const project = projects[project_name];
 
     // Project files
@@ -621,7 +621,7 @@ else
     ${separator}
     `;
 
-projects_init_list.forEach(project_name => {
+projects_process_list.forEach(project_name => {
     const project = projects[project_name];
     const slug = project_name.split("_").pop();
     const oscProject = OSC_UPDATES_FS.replace("changes", `changes.${slug}`);

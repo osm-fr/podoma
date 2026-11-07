@@ -12,7 +12,7 @@ Les propriétés dans `info.json` sont les suivantes :
 - `id` : identifiant numérique entier unique
 - `name` : identifiant de la mission (caractères autorisés : A-Z, 0-9, \_ et -)
 - `title` : nom de la mission (assez court)
-- `init_slot` : Rang d'initialisation, à partir de 1
+- `process_slot` : Rang de traitement, à partir de 1
 - `start_date` : date de début de la mission (format AAAA-MM-JJ)
 - `soft_start_date` : date de début de la période de _forte_ animation communautaire (format AAAA-MM-JJ). Ignorée sauf si `use_soft_dates` est activé. La collecte des données commence toujours à `start_date`.
 - `soft_end_date` : date de fin de la période de _forte_ animation communautaire (format AAAA-MM-JJ). Ignorée sauf si `use_soft_dates` est activé. La collecte des données se poursuit toujours jusqu'à `end_date`.
@@ -115,7 +115,7 @@ En fonction du domaine d'étude, il n'est pas inhabituel d'observer la contribut
 Podoma permet de référencer les membres depuis un projet différent afin d'éviter la duplication du stockage. Il assure le dédoublonnage des membres avant leur stockage dans la table distante, en dehors du périmètre du projet. Cela ne perturbera donc pas le calcul des statistiques.  
 Utilisez `database.members_from` pour indiquer le nom du projet distant depuis lequel les membres peuvent être référencés.
 
-Pour utiliser cette fonctionnalité, n'oubliez pas de planifier l'initialisation de vos projets en conséquence, en définissant la propriété `init_slot`. Les projets distants depuis lesquels les members sont obtenus doivent être initialisés avant tout le reste, avec un rang plus faible que tous les autres projets.
+Pour utiliser cette fonctionnalité, n'oubliez pas de planifier le traitement de vos projets en conséquence, en définissant la propriété `process_slot`. Les projets distants depuis lesquels les members sont obtenus doivent être initialisés avant tout le reste, avec un rang plus faible que tous les autres projets.
 
 ### Objets manquants
 Tel que décrit ci-dessus, Podoma exploite les diff quotidiens pour tenir les projets à jour.  

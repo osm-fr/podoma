@@ -88,9 +88,9 @@ fs.readdirSync(PROJECTS_PATH).forEach(projectDir => {
 });
 
 // Projects init list
-const projects_init_list = Object.values(projects)
+const projects_process_list = Object.values(projects)
   .slice()
-  .sort((a, b) => (a.init_slot ?? Infinity) - (b.init_slot ?? Infinity))
+  .sort((a, b) => (a.process_slot ?? Infinity) - (b.process_slot ?? Infinity))
   .map(p => p.name);
 
-module.exports = { projects_including_external, projects, projects_init_list };
+module.exports = { projects_including_external, projects, projects_process_list };
