@@ -88,19 +88,9 @@ fs.readdirSync(PROJECTS_PATH).forEach(projectDir => {
 });
 
 // Projects init list
-const projects_init_list = Array(Object.keys(projects).length);
-let lastSlot = -1;
-Object.values(projects).forEach (project => {
-	if (project.hasOwnProperty("init_slot")){
-		if (projects_init_list[project.init_slot-1] != null){
-			projects_init_list.splice(project.init_slot-1, 0, project.name);
-		}else{
-			projects_init_list[project.init_slot-1] = project.name;
-		}
-		lastSlot = Math.max(lastSlot, project.init_slot-1);
-	}else{
-		projects_init_list[lastSlot+1] = project.name;
-	}
-});
+const projects_init_list = Object.values(projects)
+  .slice()
+  .sort((a, b) => (a.init_slot ?? Infinity) - (b.init_slot ?? Infinity))
+  .map(p => p.name);
 
 module.exports = { projects_including_external, projects, projects_init_list };
