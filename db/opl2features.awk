@@ -54,6 +54,9 @@ BEGIN {
     if (length(output_members) > 0){
         printf "" >> output_members
     }
+    if (length(output_referenced) > 0){
+        printf "" >> output_referenced
+    }
     if (length(output_users) > 0){
         printf "" >> output_users
     }
@@ -163,6 +166,11 @@ BEGIN {
     }
 
     # Construction de la sortie CSV principale
-    printf "%s/%s,%s,%s,%s,%s,%s,%s,\"{%s}\",%s,%s\n",
-           features[f], fi, v, cs, a, c, t, w, tagsjson, g, tagfilter_r >> output_main
+    if (n == 0 && length(output_referenced) > 0){
+        printf "%s/%s,%s,%s,%s,%s,%s,%s,\"{%s}\",%s,%s\n",
+            features[f], fi, v, cs, a, c, t, w, tagsjson, g, tagfilter_r >> output_referenced
+    }else{
+        printf "%s/%s,%s,%s,%s,%s,%s,%s,\"{%s}\",%s,%s\n",
+            features[f], fi, v, cs, a, c, t, w, tagsjson, g, tagfilter_r >> output_main
+    }
 }

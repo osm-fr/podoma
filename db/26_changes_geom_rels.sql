@@ -7,7 +7,7 @@ with members as (
     ts as ts_start,
     LEAD(ts) OVER (PARTITION BY osmid ORDER BY version) AS ts_end,
     geom
-    FROM :features_perm_table
+    FROM :referenced_table
 	WHERE action != 'delete'
 ), list as (
 	select f.osmid osmid, f.version version, m.geom geom
