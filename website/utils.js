@@ -584,3 +584,42 @@ exports.getProjectDays = (project) => {
 
 	return days;
 };
+
+const fetchCache = new Map();
+
+/**
+ * Caches the parsed JSON of plain GET requests.
+ * Uses the URL as key (so only use for URLs whose response depends on nothing else, e.g. no custom headers).
+ * The in-flight promise is stored so concurrent requests share a single fetch.
+ * Failures are not cached. Expired entries are pruned on each new fetch.
+ */
+exports.cachedFetchJson = (url, ttlMs) => {
+	const now = Date.now();
+	const cached = fetchCache.get(url);
+	if(cached && cached.expires > now) {
+		return cached.promise;
+	}
+
+	for(const [key, entry] of fetchCache) {
+		if(entry.expires <= now) {
+			fetchCache.delete(key);
+		}
+	}
+
+	const promise = fetch(url)
+		.then(res => {
+			if(!res.ok) {
+				throw new Error(`Request failed (HTTP ${res.status}): ${url}`);
+			}
+			return res.json();
+		})
+		.catch(e => {
+			if(fetchCache.get(url)?.promise === promise) {
+				fetchCache.delete(url);
+			}
+			throw e;
+		});
+
+	fetchCache.set(url, { promise, expires: now + ttlMs });
+	return promise;
+};

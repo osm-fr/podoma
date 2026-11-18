@@ -233,6 +233,7 @@ let promises_projectStats = (pool, project) => {
         fill: false,
         borderColor: "#388E3C",
         lineTension: 0,
+        yAxisID: "y",
         },
       ],
       "daily":{
