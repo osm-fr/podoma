@@ -237,6 +237,18 @@ app.get("/projects/:name", (req, res) => {
         endDate != null && 
         new Date(endDate + "T23:59:59Z").getTime() >= recentPastThreshold;
     });
+
+  const osmoseItems = [
+    ...new Set(
+      (p.datasources || [])
+        .filter((ds) => ds.source === "osmose" && ds.item)
+        .map((ds) => ds.item),
+    ),
+  ];
+  const osmoseUrl =
+    osmoseItems.length > 0
+      ? `${CONFIG.OSMOSE_URL}/${i18n.getLocale(req)}/map/#item=${encodeURIComponent(osmoseItems.join(","))}`
+      : null;
   
   res.render(
     "pages/project",
@@ -251,6 +263,7 @@ app.get("/projects/:name", (req, res) => {
         projectsList: toDisplay,
         projectsStats: null, // Disable activity display
         days: getProjectDays(p),
+        osmoseUrl,
       },
       p,
     ),

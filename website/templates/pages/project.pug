@@ -100,6 +100,10 @@ block content
 						a.btn.btn-secondary.btn-lg.m-1(href=links.osmblog target="_blank" role="button")
 							i.fa.fa-rss.me-2
 							| #{__("Blog article")}
+					if osmoseUrl
+						a.btn.btn-secondary.btn-lg.m-1(href=osmoseUrl target="_blank" role="button")
+							i.fa.fa-minus-square.me-2
+							| Osmose
 			else if isHardEnded && links.osmblog
 				div.text-center
 					a.btn.btn-secondary.btn-lg.m-1(href=links.osmblog target="_blank" role="button")
