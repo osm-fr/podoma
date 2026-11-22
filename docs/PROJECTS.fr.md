@@ -29,7 +29,7 @@ Les propriétés dans `info.json` sont les suivantes :
 - `database.compare` : configuration pour la recherche d'objets OpenStreetMap à comparer, suit le format de `database.imposm` avec une propriété supplémentaire `radius` (rayon de rapprochement en mètres)
 - `database.labels` : Objet de définition d'étiquettes attribuées aux versions d'objets en fonction de leurs tags. Chaque étiquette est associée au path JSON utilisé par la fonction [jsonb_path_exists](https://www.postgresql.org/docs/current/functions-json.html#FUNCTIONS-JSON-PROCESSING-TABLE) utilisée sur la chaine de tags. Exemple `"labels":{"etiquette1":"$ ? (@.substation==\"transmission\")"}` pour attribuer `etiquette1` à tous les objets portant le tags `substation=transmission`. Voir ci-dessous à propos du filtrage
 - `database.live` : Active les traitements qui s'appuient sur la présence d'une table tenue à jour en live, par imposm ou tout autre processus (voir remplacer imposm ci-dessous).
-- `database.members_from` : Nom d'un autre projet qui fourni les membres des objets analysés par ce projet-ci. Permet de réduire la taille de la base de données dans le cas d'une analyse noeuds/chemins imbriqués.
+- `database.members_from` : Nom d'un autre projet qui fourni les membres des objets analysés par ce projet-ci. Permet de réduire la taille de la base de données dans le cas d'une analyse noeuds/chemins imbriqués. A n'utiliser que si le filtre du projet ne comprend pas de possibles membres référencés.
 - `datasources` : liste des sources de données qui apparaissent sur la page (voir ci-dessous)
 - `teams` : liste d'équipes utiles à la construction des statistiques et définies par leur nom correspondant à un tableau de noms d'utilisateurs OSM.
 - `statistics` : configuration de l'affichage des statistiques sur la page du projet
@@ -108,12 +108,16 @@ La phase `update_projects` devra ensuite être réinitialisée à son tour pour 
 ### Membres distants
 Les projets impliquant des chemins ou des relations vont également stocker leurs membres, principalement pour reconstruire les géométries correspondantes. Les noeuds sont effectivement nécessaires pour connaître la longueur d'un chemin ou la surface d'un polygone.
 
-En fonction du domaine d'étude, il n'est pas inhabituel d'observer la contribution sur des chemins et sur leurs noeuds membres. Ainsi, stocker deux fois les membres serait inefficace.
+En fonction du domaine d'étude, il n'est pas inhabituel d'observer la contribution sur des chemins et sur leurs noeuds membres dans deux projets distincts. Dans cette situation, stocker deux fois les membres serait inefficace.
 
 ![Mutualisation du stockage des noeuds entre deux projets voisins](./projects_reference.svg)
 
-Podoma permet de référencer les membres depuis un projet différent afin d'éviter la duplication du stockage. Il assure le dédoublonnage des membres avant leur stockage dans la table distante, en dehors du périmètre du projet. Cela ne perturbera donc pas le calcul des statistiques.  
+Podoma permet de référencer les membres depuis un projet différent afin d'éviter la duplication du stockage. Il assure le dédoublonnage des membres avant leur stockage dans la table distante, en dehors du périmètre du projet. Cela ne perturbera donc pas le calcul des statistiques dans aucun projet.  
 Utilisez `database.members_from` pour indiquer le nom du projet distant depuis lequel les membres peuvent être référencés.
+
+Cette fonctionnalité n'est d'usage que lorsque les deux projets ne se recouvrent pas. Vous devez vous assurer que le filtre du rpojet référençant ne comprendra pas les membres référencés.
+- C'est valide : w/power=line and n/power=pole
+- Ce n'est pas valide : wn/power=line,pole and n/power=pole,tower
 
 Pour utiliser cette fonctionnalité, n'oubliez pas de planifier le traitement de vos projets en conséquence, en définissant la propriété `process_slot`. Les projets distants depuis lesquels les members sont obtenus doivent être initialisés avant tout le reste, avec un rang plus faible que tous les autres projets.
 

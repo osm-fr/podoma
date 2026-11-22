@@ -88,9 +88,9 @@ BEGIN {
     }
 
     # Validation du filtre sur la geometrie
-    tagfilter_r = 0
+    geomfilter_r = 0
     if (length(tagfilter) > 0){
-        tagfilter_r = (length(geomfilter) == 0 ? 1 : f ~ geomfilter)
+        geomfilter_r = (length(geomfilter) == 0 ? 1 : f ~ geomfilter)
         for (i in tagsconds) {
             results[i] = false
         }
@@ -149,6 +149,7 @@ BEGIN {
     }
 
     # Validation du filtre sur les tags
+    tagfilter_r = geomfilter_r
     if (length(tagfilter) > 0 && tagfilter_r){
         for (i in results){
             split(i, indices, SUBSEP)
@@ -166,7 +167,7 @@ BEGIN {
     }
 
     # Construction de la sortie CSV principale
-    if (n == 0 && length(output_referenced) > 0){
+    if (tagfilter_r == 0 && length(output_referenced) > 0){
         printf "%s/%s,%s,%s,%s,%s,%s,%s,\"{%s}\",%s,%s\n",
             features[f], fi, v, cs, a, c, t, w, tagsjson, g, tagfilter_r >> output_referenced
     }else{

@@ -29,7 +29,7 @@ The properties in `info.json` are as follows:
 - `database.compare`: configuration for the search of OpenStreetMap objects to compare, follows the format of `database.imposm` with an additional property `radius` (reconciliation radius in meters)
 - `database.labels`: Labels definitions that are assigned to each feature version depending on their tags. Each label is associated to a JSON path used by [jsonb_path_exists](https://www.postgresql.org/docs/current/functions-json.html#FUNCTIONS-JSON-PROCESSING-TABLE) over each feature tags. Example `"labels":{"label1":"$ ? (@.substation==\"transmission\")"}` to assign `label1` to any object that holds `substation=transmission`. See below about filtering.
 - `database.live`: Enable computations that involve live table, populated by imposm or any other process (see replacing imposm below).
-- `database.members_from`: A remote project's name from which members of features are fetched. It optimise the database's size in case of nested ways/nodes analysis. 
+- `database.members_from`: A remote project's name from which members of features are fetched. It optimise the database's size in case of nested ways/nodes analysis. To be used if and only if the project's filter won't select a referenced member.
 - `datasources`: list of data sources that appear on the page (see below)
 - `teams` : list of teams used to build statistics and defined with their name corresponding to a OSM usernames table.
 - `statistics`: configuration of statistics display on the project page
@@ -109,13 +109,17 @@ Then, the `update_projects` should be inited again to propagate the new labels i
 ### Remote members
 Projects involving ways and relations will also store referenced members, mostly for sake of geometry rebuild. Nodes are indeed necessary to know a way's length or a polygon's surface.
 
-Depending on the field you are interested in, it's not unusual to observe contribution on ways and their member nodes as well.  
-So, storing members twice wouldn't be efficient.
+Depending on the field you are interested in, it's not unusual to observe contribution on ways and their member nodes as well in two separate projects.  
+In this situation, storing members twice wouldn't be efficient.
 
 ![Share nodes storage between neighbour projects](./projects_reference.svg)
 
-Podoma allows to get members from a different project as to avoid duplication of storage. It will automatically deduplicate members before storing them in the remote table, outside of the remote project's scope. It won't disrupt statistics and exports of selected features.  
+Podoma allows to get members from a different project as to avoid duplication of storage. It will automatically deduplicate members before storing them in the remote table, outside of the remote project's scope. It won't disrupt statistics and exports of selected features in any project.  
 Use `database.members_from` to set the remote project name from where the members can be retrevied.
+
+Use this feature only when involved projects don't overlap. You have to be sure the filters won't cover members of selected ways and relations as well.
+- This is valid: w/power=line and n/power=pole
+- This is not valid: wn/power=line,pole and n/power=pole,tower
 
 To take advantage of this feature, don't forget to plan project's initialisation accordingly, by setting `process_slot` property. Remote projects that hold members must be inited before anything else, with a lower slot than other projects.
 
