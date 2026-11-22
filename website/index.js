@@ -17,7 +17,7 @@ const {
   getBadgesDetails,
   getOsmToUrlMappings,
   getProjectDays,
-  cachedFetchJson,
+  cachedFetchJson
 } = require("./utils");
 const {
   promise_lastUpdate,
