@@ -18,6 +18,7 @@ const {
   getOsmToUrlMappings,
   getProjectDays,
   cachedFetchJson,
+  mapStatsLook
 } = require("./utils");
 const {
   promise_lastUpdate,
@@ -265,6 +266,7 @@ app.get("/projects/:name", (req, res) => {
         projectsList: toDisplay,
         projectsStats: null, // Disable activity display
         days: getProjectDays(p),
+        mapStatsLook: mapStatsLook,
         osmoseUrl,
       },
       p,

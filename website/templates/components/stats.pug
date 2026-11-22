@@ -59,7 +59,7 @@ div.row
 
 script(type="module").
 	import * as maplibregl from "/lib/maplibre-gl/maplibre-gl.mjs";
-	
+
 	const projectDays = !{JSON.stringify(days)};
 	function showStatistics() {
 		const numberFormat = new Intl.NumberFormat();
@@ -627,6 +627,10 @@ script(type="module").
 					popupHover.remove();
 				});
 
+				mapStats.on("zoomend", "stats_0", () => {
+					updateMapLegend(mapStats, Object.keys(res.mapStyle.legend));
+				});
+
 				// Boundary stats legends
 				const mapStatsLegend = document.getElementById("map-stats-legend");
 				mapStatsLegend.innerHTML = '';
@@ -636,13 +640,16 @@ script(type="module").
 					let symbol2BackgroundGradient;
 
 					const itemDiv = document.createElement("div");
+					itemDiv.id = `map-stats-legend-${lvl}`
 					itemDiv.classList.add("col-lg-4", "d-flex", "justify-content-start", "align-items-center");
 					const symbol1 = document.createElement("div");
+					const symbol1Sign = data.prjDeltaMin != 0 ? data.prjDeltaMin / Math.abs(data.prjDeltaMin) : 0;
+					const symbol1Size = data.minSize + 1 + (Math.abs(data.prjDeltaMin) * (data.maxSize - data.minSize) / Math.abs(data.prjDeltaMax))
 					symbol1.classList.add("map-stats-symbol");
-					symbol1.style.width = `${Math.ceil(data.minSize*1.5)}px`;
-					symbol1.style.height = `${Math.ceil(data.minSize*1.5)}px`;
-					symbol1.style.borderRadius = `${Math.ceil(data.minSize*1.5/2)}px`;
-					symbol1.style.backgroundColor = data.color;
+					symbol1.style.width = `${Math.ceil(symbol1Size*1.5)}px`;
+					symbol1.style.height = `${Math.ceil(symbol1Size*1.5)}px`;
+					symbol1.style.borderRadius = `${Math.ceil(symbol1Size*1.5/2)}px`;
+					symbol1.style.backgroundColor = mapStatsLook.symbolColors[symbol1Sign+1];
 
 					const symbol1LabelDiv = document.createElement("div");
 					symbol1LabelDiv.classList.add("text-end");
@@ -664,18 +671,21 @@ script(type="module").
 					symbol1LabelLowerDeltaLabel.appendChild(document.createTextNode("24h"));
 					symbol1LabelLowerDelta.appendChild(symbol1LabelLowerDeltaLabel);
 					symbol1LabelLowerDelta.appendChild(document.createTextNode(" "));
-					if (data.dailyDeltaMin != 0){
+					if (data.dailyDeltaMin < 0){
 						symbol1LabelLowerDelta.appendChild(createDeltaElement(data.dailyDeltaMin, null, false));
-						symbol2BackgroundGradient = "#DF0000"
+						symbol2BackgroundGradient = mapStatsLook.symbolColors["-1"];
 					}else{
 						symbol1LabelLowerDelta.appendChild(document.createTextNode("-"));
-						symbol2BackgroundGradient = "grey"
+						symbol2BackgroundGradient = mapStatsLook.symbolColors["0"]
 					}
 					symbol1LabelDiv.appendChild(symbol1LabelLowerDelta);
 
 					symbol2BackgroundGradient += ", white";
 
 					const symbol2 = symbol1.cloneNode(true);
+					const symbol2Sign = data.prjDeltaMax != 0 ? data.prjDeltaMax / Math.abs(data.prjDeltaMax) : 0;
+					const symbol2Size = data.maxSize
+					const symbol2Color = mapStatsLook.symbolColors[symbol2Sign+1];
 					symbol2.classList.add("map-stats-symbol-casing");
 					symbol2.style.width = `${Math.ceil(data.maxSize*1.5)}px`;
 					symbol2.style.height = `${Math.ceil(data.maxSize*1.5)}px`;
@@ -699,16 +709,16 @@ script(type="module").
 					symbol2LabelUpperDeltaLabel.appendChild(document.createTextNode("24h"));
 					symbol2LabelUpperDelta.appendChild(symbol2LabelUpperDeltaLabel);
 					symbol2LabelUpperDelta.appendChild(document.createTextNode(" "));
-					if (data.dailyDeltaMax != 0){
+					if (data.dailyDeltaMax > 0){
 						symbol2LabelUpperDelta.appendChild(createDeltaElement(data.dailyDeltaMax, null, false));
-						symbol2BackgroundGradient += ", #24b424"
+						symbol2BackgroundGradient += `, ${mapStatsLook.symbolColors["+1"]}`
 					}else{
 						symbol2LabelUpperDelta.appendChild(document.createTextNode("-"));
-						symbol2BackgroundGradient += ", grey"
+						symbol2BackgroundGradient += `, ${mapStatsLook.symbolColors["0"]}`
 					}
 					symbol2LabelDiv.appendChild(symbol2LabelUpperDelta);
 
-					symbol2.style.background = `linear-gradient(${data.color}, ${data.color}) padding-box, linear-gradient(to right, ${symbol2BackgroundGradient}) border-box`;
+					symbol2.style.background = `linear-gradient(${symbol2Color},${symbol2Color}) padding-box, linear-gradient(to right, ${symbol2BackgroundGradient}) border-box`;
 
 					itemDiv.appendChild(symbol1LabelDiv);
 					itemDiv.appendChild(symbol1);
@@ -716,6 +726,8 @@ script(type="module").
 					itemDiv.appendChild(symbol2LabelDiv);
 					mapStatsLegend.appendChild(itemDiv);
 				});
+
+				updateMapLegend(mapStats, Object.keys(res.mapStyle.legend));
 			}
 			else {
 				mapStatsContainer.parentNode.classList.add("d-none");
@@ -723,7 +735,20 @@ script(type="module").
 		});
 	}
 
-	const createDeltaElement = (delta, title, detail) => {
+	function updateMapLegend(map, lvlList){
+		const z = map.getZoom();
+		lvlList.forEach(lvl => {
+			const [min, max = min] = mapStatsLook.adminZoom[lvl];
+
+			if (z >= min && valeur <= max){
+				document.getElementById(`map-stats-legend-${lvl}`).classList.remove("opacity-50");
+			}else{
+				document.getElementById(`map-stats-legend-${lvl}`).classList.add("opacity-50");
+			}
+		});
+	}
+
+	function createDeltaElement (delta, title, detail) {
 		let delta_label = "0";
 		let delta_colour = "#000000";
 		if (delta < 0){
@@ -754,7 +779,7 @@ script(type="module").
 	}
 
 	let delayDisplayStats;
-	const timerShowStats = () => {
+	function timerShowStats (){
 		if(delayDisplayStats) { clearTimeout(delayDisplayStats); }
 		delayDisplayStats = setTimeout(showStatistics, 1000);
 	};
