@@ -619,7 +619,7 @@ Le service s'installe avec les deux commandes suivantes :
 
 ```bash
 docker run --rm [--network=your-network] -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest install
-docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest init
+docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest init_instance
 ```
 La deuxième commande va initialiser chaque projet dans la base de données et peut donner lieu à des temps de traitement importants selon le périmètre configuré.
 
@@ -642,6 +642,13 @@ docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e 
 docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest update_changes {init,update} [keep]
 docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest update_projects [init]
 ```
+
+Lorsqu'un nouveau projet est ajouté à une instance déjà initialisée, initialisez uniquement ce projet (les projets déjà initialisés sont ignorés) et calculez ses dénombrements avec :
+
+```bash
+docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest init_new_projects [keep]
+```
+Redémarrez ensuite le container `run` pour que le site charge le nouveau projet.
 
 Si vous utilisez la mise à jour via Imposm, vous devez avoir un container qui tourne en fond pour gérer les mises à jour régulières :
 

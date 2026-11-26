@@ -629,7 +629,7 @@ Database is installed and inited simply with:
 
 ```bash
 docker run --rm [--network=your-network] -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest install
-docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest init
+docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest init_instance
 ```
 Second command will init each project in the database. It can lead to significant process times depending on chosen perimeter.
 And then run the server with:
@@ -652,6 +652,13 @@ docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e 
 docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest update_projects [init]s
 ```
 See below for the related documentation.
+
+When a new project is added to an already initialized instance, init only that project (projects already inited are skipped) and compute its counts with:
+
+```bash
+docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest init_new_projects [keep]
+```
+Then restart the `run` container so that the website loads the new project.
 
 If you use Imposm updates, you may start and let run another container that handles regular updates as well:
 
