@@ -139,55 +139,70 @@ script(type="module").
 				blocks.appendChild(b);
 			};
 
-			const osmCounts = res.chart?.[0]?.data,
-				softStartDate = "#{soft_start_date || ''}",
+			const roundTo1 = (v) => Math.round(v * 10) / 10,
+				fmtCount = (v) => numberFormat.format(v),
+				fmtLength = (v) => numberFormat.format(roundTo1(v)) + " km",
+				deltaCount = (a, b) => a - b,
+				deltaLength = (a, b) => roundTo1(a - b);
+
+			const softStartDate = "#{soft_start_date || ''}",
 				softEndDate = "#{soft_end_date || ''}",
 				softStartDateObj = new Date(softStartDate),
 				softEndDateObj = new Date(softEndDate),
 				useSoftDates = "#{use_soft_dates || ''}" === "true"  && !isNaN(softStartDateObj) && !isNaN(softEndDateObj),
 				isDailyDateToday = res.daily?.ts && (new Date().getTime() - new Date(res.daily.ts).getTime()) <= 24 * 60 * 60 * 1000;
 
-			if (useSoftDates && osmCounts?.length > 1) {
-				// Showing added element count between soft dates
-				const startIndex = osmCounts.findIndex(x => new Date(x.x) >= softStartDateObj),
-					endIndex = osmCounts.findIndex(x => new Date(x.x) >= softEndDateObj),
-					softStartItem = osmCounts[Math.max(0, startIndex)],
-					softEndItem = osmCounts[endIndex >= 0 ? endIndex : osmCounts.length - 1],
-					softDateRange = new Intl.DateTimeFormat().formatRange(new Date(softStartItem.x), new Date(softEndItem.x));
-				addBlock(
-					"plus",
-					numberFormat.format(softEndItem.y - softStartItem.y),
-					`#{__('%s added (%s)', title.toLowerCase(), "${softDateRange}")}`,
-					isDailyDateToday && res.daily && res.past ? { "24h": res.daily.added - res.past.added } : null
-				);
-			} else if (res.daily?.added) {
-				// Showing added element count in the whole project duration 
-				addBlock(
-					"plus",
-					numberFormat.format(res.daily.added),
-					`#{__('%s added since %s', title.toLowerCase(), "${(new Date(res.daily.ts_start)).toLocaleDateString()}")}`,
-					isDailyDateToday && res.past ?  {"24h": res.daily.added - res.past.added } : null
-				);
-			} else {
-				console.debug("No added element count to show in stats");
-			}
+			// Added / currently in OSM blocks, for the number of features (statistics.count) and for the length in km (statistics.length)
+			const metrics = [
+				{ addedKey: "added", countKey: "count", axis: "y", fmt: fmtCount, delta: deltaCount, name: "#{title.toLowerCase()}", live: true },
+				{ addedKey: "length_added", countKey: "length", axis: "yLength", fmt: fmtLength, delta: deltaLength, name: "#{title.toLowerCase()} (km)", live: false }
+			];
+			for (const m of metrics) {
+				const series = res.chart?.find(ds => ds.yAxisID === m.axis)?.data;
+				if (!series) { continue; }
 
-			if(res.current?.count) {
-				addBlock(
-					"location-dot",
-					numberFormat.format(res.current.count),
-					"#{__('%s currently in OSM', title.toLowerCase())}",
-					res.daily?.count ? {"live": res.current.count - res.daily.count} : null
-				);
-			} else if (res.daily?.count) {
-				addBlock(
-					"location-dot",
-					numberFormat.format(res.daily.count),
-					`#{__('%s in OSM on the last update', title.toLowerCase())}`,
-					null
-				);
-			} else {
-				console.debug("No current or daily element count to show in stats");
+				if (useSoftDates && series.length > 1) {
+					// Showing added element count between soft dates
+					const startIndex = series.findIndex(x => new Date(x.x) >= softStartDateObj),
+						endIndex = series.findIndex(x => new Date(x.x) >= softEndDateObj),
+						softStartItem = series[Math.max(0, startIndex)],
+						softEndItem = series[endIndex >= 0 ? endIndex : series.length - 1],
+						softDateRange = new Intl.DateTimeFormat().formatRange(new Date(softStartItem.x), new Date(softEndItem.x));
+					addBlock(
+						"plus",
+						m.fmt(softEndItem.y - softStartItem.y),
+						`#{__('%s added (%s)', "${m.name}", "${softDateRange}")}`,
+						isDailyDateToday && res.daily && res.past ? { "24h": m.delta(res.daily[m.addedKey], res.past[m.addedKey]) } : null
+					);
+				} else if (res.daily?.[m.addedKey]) {
+					// Showing added element count in the whole project duration 
+					addBlock(
+						"plus",
+						m.fmt(res.daily[m.addedKey]),
+						`#{__('%s added since %s', "${m.name}", "${(new Date(res.daily.ts_start)).toLocaleDateString()}")}`,
+						isDailyDateToday && res.past ?  {"24h": m.delta(res.daily[m.addedKey], res.past[m.addedKey]) } : null
+					);
+				} else {
+					console.debug("No added element count to show in stats");
+				}
+
+				if(m.live && res.current?.count) {
+					addBlock(
+						"location-dot",
+						m.fmt(res.current.count),
+						"#{__('%s currently in OSM', title.toLowerCase())}",
+						res.daily?.count ? {"live": res.current.count - res.daily.count} : null
+					);
+				} else if (res.daily?.[m.countKey]) {
+					addBlock(
+						"location-dot",
+						m.fmt(res.daily[m.countKey]),
+						`#{__('%s in OSM on the last update', "${m.name}")}`,
+						null
+					);
+				} else {
+					console.debug("No current or daily element count to show in stats");
+				}
 			}
 
 			if(res.tasksSolved !== undefined) {
@@ -431,36 +446,35 @@ script(type="module").
 					}
 				};
 
-				// Feature counts and Osmose issue counts can have very different magnitudes.
-				// With statistics.osmose_separate_axis each gets its own Y axis (counts on
-				// the left, Osmose on the right), titled and colored like its legend entry;
-				// otherwise they share one axis, switching to log scale when few tasks are done.
+				// Feature counts, lengths (km) and Osmose issue counts have very different magnitudes.
+				// Lengths always get their own Y axis (yLength). With statistics.osmose_separate_axis Osmose gets its own too;
+				// otherwise Osmose shares the counts axis, switching to log scale when few tasks are done.
+				// Each separate axis is titled and colored like its legend entry; the first one is on the left, the others on the right.
 				const separateOsmoseAxis = "#{statistics && statistics.osmose_separate_axis || ''}" === "true";
-				if(separateOsmoseAxis) {
-					const osmoseDatasets = res.chart.filter(ds => ds.yAxisID === "yOsmose"),
-						countDatasets = res.chart.filter(ds => ds.yAxisID === "y"),
-						yAxeFor = (datasets, position, title) => {
-							const color = datasets[0]?.borderColor;
-							return {
-								...yAxeLinear,
-								position,
-								display: datasets.length > 0,
-								title: { display: true, text: title, color },
-								ticks: { ...yAxeLinear.ticks, color },
-								grid: { drawOnChartArea: position === "left" || countDatasets.length === 0 }
-							};
+				const chartDatasets = res.chart.map(ds => (ds.yAxisID === "yLength" || (separateOsmoseAxis && ds.yAxisID === "yOsmose")) ? ds : { ...ds, yAxisID: "y" });
+				const axisIds = ["y", "yLength", "yOsmose"].filter(id => chartDatasets.some(ds => ds.yAxisID === id));
+				if(axisIds.length > 1 || separateOsmoseAxis) {
+					axisIds.forEach((id, i) => {
+						const datasets = chartDatasets.filter(ds => ds.yAxisID === id),
+							color = datasets[0].borderColor;
+						scales[id] = {
+							...yAxeLinear,
+							position: i === 0 ? "left" : "right",
+							title: { display: true, text: id === "yOsmose" && datasets.length > 1 ? "Osmose" : datasets[0].label, color },
+							ticks: { ...yAxeLinear.ticks, color },
+							grid: { drawOnChartArea: i === 0 }
 						};
-					scales.y = yAxeFor(countDatasets, "left", countDatasets[0].label);
-					scales.yOsmose = yAxeFor(osmoseDatasets, "right", osmoseDatasets.length == 1 ? osmoseDatasets[0].label : "Osmose");
+					});
 				} else {
 					scales.y = res.pctTasksDone === undefined || parseInt(res.pctTasksDone) >= 30 ? yAxeLinear : yAxeLogarithmic;
+					if(axisIds[0] === "yLength") { scales.yLength = scales.y; delete scales.y; }
 				}
 
 				const ctx = document.getElementById("stats-chart").getContext("2d");
 				const myChart = new Chart(ctx, {
 					type: "line",
 					data: {
-						datasets: separateOsmoseAxis ? res.chart : res.chart.map(ds => ({ ...ds, yAxisID: "y" }))
+						datasets: chartDatasets
 					},
 					options: {
 						responsive: true,

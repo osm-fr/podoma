@@ -121,7 +121,7 @@ The properties in `info.json` are as follows:
 - `teams` : list of teams used to build statistics and defined with their name corresponding to a OSM usernames table.
 - `statistics`: configuration of statistics display on the project page
 - `statistics.count`: enable projects features counting
-- `statistics.length` : enable length and surface measurement on projects features. Don't forget to reinit project to enforce any change.
+- `statistics.length` : enable length and surface measurement on projects features. Don't forget to reinit project to enforce any change. When enabled, the progress chart and the statistics blocks of the project page show the cumulated length (in km) too, on a separate Y axis. With both `statistics.count` and `statistics.length` enabled, the progress is shown in number of features and in km.
 - `statistics.labels` : enable contribution classification in labels tables. As a consequence, it produces users contribution on labels too.
 - `statistics.feature_name`: name to display to the user for these objects
 - `statistics.osmose_tasks`: name of the tasks performed via Osmose

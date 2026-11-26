@@ -213,56 +213,69 @@ let promises_mappersTeamCounts = (pool, project, team) => {
 let promises_projectStats = (pool, project) => {
   const allPromises = [];
 
-  // Fetch feature counts
-  if (project.statistics.count) {
+  // Fetch feature counts and/or lengths
+  // statistics.count: progress in number of features, statistics.length: progress in km of ways (len is in meters). Both can be enabled together.
+  if (project.statistics.count || project.statistics.length) {
+    const useCount = !!project.statistics.count;
+    const useLength = !!project.statistics.length;
+    const round1 = (v) => Math.round(v * 10) / 10;
+    const toKm = (r) => round1(Number(r.len) / 1000);
     allPromises.push(
     pool.query(
       `
-      SELECT ts, amount
+      SELECT ts, amount, len
       FROM pdm_feature_counts
       WHERE project_id = $1 AND label IS NULL
       ORDER BY ts ASC
       `,
       [project.id]
     )
-    .then((results) => ({
-      chart: [
-        {
-        label: "Count in OSM",
-        data: results.rows.map((r) => ({ x: r.ts, y: r.amount })),
-        fill: false,
-        borderColor: "#388E3C",
-        lineTension: 0,
-        yAxisID: "y",
-        },
-      ],
-      "daily":{
-        "ts": results.rows.length > 0 &&
-        results.rows[results.rows.length - 1].ts,
-        "ts_start": results.rows[0].ts,
-        "count":results.rows.length > 0 &&
-        results.rows[results.rows.length - 1].amount,
-        "added":
-        results.rows.length > 0 &&
-        results.rows[results.rows.length - 1].amount -
-          results.rows[0].amount
-      },
-      "past": {
-        "ts": results.rows.length > 1 &&
-        results.rows[results.rows.length - 2].ts,
-        "ts_start": results.rows[0].ts,
-        "count": results.rows.length > 1 &&
-        results.rows[results.rows.length - 2].amount,
-        "added":
-        results.rows.length > 1 &&
-        results.rows[results.rows.length - 2].amount -
-          results.rows[0].amount
+    .then((results) => {
+      const rows = results.rows;
+      const last = rows.length - 1;
+      const chart = [];
+      if (useCount) {
+        chart.push({
+          label: "Count in OSM",
+          data: rows.map((r) => ({ x: r.ts, y: r.amount })),
+          fill: false,
+          borderColor: "#388E3C",
+          lineTension: 0,
+          yAxisID: "y",
+        });
       }
-      })),
+      if (useLength) {
+        chart.push({
+          label: "Length in OSM (km)",
+          data: rows.map((r) => ({ x: r.ts, y: toKm(r) })),
+          fill: false,
+          borderColor: "#1E88E5",
+          lineTension: 0,
+          yAxisID: "yLength",
+        });
+      }
+      const snapshot = (i) => {
+        const o = { "ts": rows[i].ts, "ts_start": rows[0].ts };
+        if (useCount) {
+          o.count = rows[i].amount;
+          o.added = rows[i].amount - rows[0].amount;
+        }
+        if (useLength) {
+          o.length = toKm(rows[i]);
+          o.length_added = round1(toKm(rows[i]) - toKm(rows[0]));
+        }
+        return o;
+      };
+      return {
+        chart,
+        "daily": rows.length > 0 && snapshot(last),
+        "past": rows.length > 1 && snapshot(last - 1),
+      };
+    }),
     );
 
     // Current time point is only available if a live table is maintained
-    if (project.database.live){
+    if (project.database.live && useCount){
       allPromises.push(
         pool.query(
           `SELECT COUNT(*) AS amount FROM pdm_project_${project.name.split("_").pop()}`,

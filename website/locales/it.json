@@ -144,6 +144,7 @@
 	"Currently: %s": "In corso: %s",
 	"Discuss": "Discussione",
 	"Count in OSM": "Conteggio in OSM",
+	"Length in OSM (km)": "Lunghezza in OSM (km)",
 	"Number of objects per key": "Numero di oggetti per chiave",
 	"%s added since %s": "%s aggiunti dal %s",
 	"%s added (%s)": "%s aggiunti (%s)",
