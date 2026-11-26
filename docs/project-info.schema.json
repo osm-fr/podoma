@@ -1,0 +1,429 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://github.com/osm-fr/podoma/docs/project-info.schema.json",
+	"title": "Podoma project info.json",
+	"description": "Metadata of a Podoma project (projects/<YYYY-MM>_<slug>/info.json). See the \"Project configuration\" section of docs/DEVELOP.md.",
+	"type": "object",
+	"required": ["id", "name", "title", "start_date", "end_date"],
+	"additionalProperties": false,
+	"properties": {
+		"$schema": { "type": "string" },
+		"id": {
+			"description": "Unique integer identifier. Becomes pdm_projects.project_id (primary key): it must not be shared with any other project.",
+			"type": "integer",
+			"minimum": 1
+		},
+		"name": {
+			"description": "Mission identifier, usually <YYYY-MM>_<slug> and equal to the directory name. The part after the last '_' is the slug used for DB objects and the badge (website/images/badges/<slug>.svg): it must be unique across all projects.",
+			"type": "string",
+			"pattern": "^[A-Za-z0-9_-]+$"
+		},
+		"title": {
+			"description": "Name of the mission (short enough).",
+			"type": "string",
+			"minLength": 1
+		},
+		"summary": {
+			"description": "Summary of the mission.",
+			"type": "string"
+		},
+		"start_date": {
+			"description": "Start date of the mission / data collection (YYYY-MM-DD).",
+			"$ref": "#/definitions/date"
+		},
+		"end_date": {
+			"description": "End date of the mission / data collection (YYYY-MM-DD). null enables endless updates.",
+			"oneOf": [{ "$ref": "#/definitions/date" }, { "type": "null" }]
+		},
+		"soft_start_date": {
+			"description": "Start date of the strong community animation period (YYYY-MM-DD). Ignored unless use_soft_dates is true. Must be >= start_date.",
+			"$ref": "#/definitions/date"
+		},
+		"soft_end_date": {
+			"description": "End date of the strong community animation period (YYYY-MM-DD). Ignored unless use_soft_dates is true. Must be >= soft_start_date and <= end_date.",
+			"$ref": "#/definitions/date"
+		},
+		"use_soft_dates": {
+			"description": "Use soft_start_date/soft_end_date (when set; otherwise falls back to start_date/end_date) to decide whether the project is past/current/next and to bound points, leaderboard and badges. Taken into account at the next update_changes run.",
+			"type": "boolean",
+			"default": false
+		},
+		"links": {
+			"description": "URLs to third party pages.",
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"osmwiki": { "description": "OSM wiki page.", "$ref": "#/definitions/url" },
+				"osmforum": { "description": "OSM forum thread.", "$ref": "#/definitions/url" },
+				"osmblog": { "description": "OSM blog page.", "$ref": "#/definitions/url" },
+				"external_statistics": {
+					"description": "External statistics page: if set, it is used INSTEAD of the built-in statistics (database.osmium_tag_filter becomes optional).",
+					"type": "string",
+					"$ref": "#/definitions/url"
+				}
+			}
+		},
+		"database": { "$ref": "#/definitions/database" },
+		"datasources": {
+			"description": "Data sources displayed on the project page/map.",
+			"type": "array",
+			"items": { "$ref": "#/definitions/datasource" }
+		},
+		"teams": {
+			"description": "Teams used to build statistics: team name -> list of OSM usernames.",
+			"type": "object",
+			"additionalProperties": {
+				"type": "array",
+				"items": { "type": "string" }
+			}
+		},
+		"statistics": { "$ref": "#/definitions/statistics" },
+		"editors": { "$ref": "#/definitions/editors" }
+	},
+	"anyOf": [
+		{
+			"required": ["database"],
+			"properties": { "database": { "required": ["osmium_tag_filter"] } }
+		},
+		{
+			"required": ["links"],
+			"properties": { "links": { "required": ["external_statistics"] } }
+		}
+	],
+	"allOf": [
+		{
+			"if": { "required": ["statistics", "database"], "properties": { "database": { "required": ["osmium_tag_filter"] } } },
+			"then": { "required": ["datasources"] }
+		}
+	],
+	"definitions": {
+		"url": {
+			"type": "string",
+			"pattern": "^https?://\\S+$"
+		},
+		"date": {
+			"type": "string",
+			"pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$"
+		},
+		"imposmMapping": {
+			"description": "Imposm tag mapping: OSM key -> list of values (\"__any__\" for any value). See https://imposm.org/docs/imposm3/latest/mapping.html#tags",
+			"type": "object",
+			"minProperties": 1,
+			"additionalProperties": {
+				"type": "array",
+				"minItems": 1,
+				"items": { "type": "string" }
+			}
+		},
+		"imposmTypes": {
+			"description": "Geometry types to take into account.",
+			"type": "array",
+			"minItems": 1,
+			"uniqueItems": true,
+			"items": { "enum": ["point", "linestring", "polygon", "relation", "relation_member"] }
+		},
+		"database": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"osmium_tag_filter": {
+					"description": "Osmium tags-filter expression(s) selecting the project perimeter (e.g. \"nwr/amenity=fuel\"). Several filters can be separated by spaces, or combined with '&'. The '!=' operator is NOT supported. See https://docs.osmcode.org/osmium/latest/osmium-tags-filter.html",
+					"type": "string",
+					"minLength": 1,
+					"not": { "pattern": "!=" }
+				},
+				"imposm": {
+					"description": "Imposm configuration for importing live-updated OSM data.",
+					"type": "object",
+					"required": ["types", "mapping"],
+					"additionalProperties": false,
+					"properties": {
+						"types": { "$ref": "#/definitions/imposmTypes" },
+						"mapping": { "$ref": "#/definitions/imposmMapping" }
+					}
+				},
+				"compare": {
+					"description": "OSM objects to compare against (shown by the osm-compare datasource). Same format as imposm, plus radius.",
+					"type": "object",
+					"required": ["types", "mapping", "radius"],
+					"additionalProperties": false,
+					"properties": {
+						"types": { "$ref": "#/definitions/imposmTypes" },
+						"mapping": { "$ref": "#/definitions/imposmMapping" },
+						"radius": { "description": "Reconciliation radius in meters.", "type": "number", "exclusiveMinimum": 0 }
+					}
+				},
+				"labels": {
+					"description": "Label name -> PostgreSQL SQL/JSON path evaluated (jsonb_path_exists) over each feature version's tags, e.g. \"$ ? (@.substation == \\\"transmission\\\")\". Label changes need a reinit.",
+					"type": "object",
+					"additionalProperties": { "type": "string", "minLength": 1 }
+				},
+				"live": {
+					"description": "Enable computations involving the live table (Imposm or equivalent), including fetching missing features from it.",
+					"type": "boolean",
+					"default": false
+				}
+			}
+		},
+		"points": {
+			"description": "Points per contribution type (built-in: add, edit-in, edit, edit-out, delete, note; others can be set by contribs.sql).",
+			"type": "object",
+			"properties": {
+				"add": { "type": "number" },
+				"edit-in": { "type": "number" },
+				"edit": { "type": "number" },
+				"edit-out": { "type": "number" },
+				"delete": { "type": "number" },
+				"note": { "type": "number" }
+			},
+			"additionalProperties": { "type": "number" }
+		},
+		"statistics": {
+			"description": "Configuration of the statistics display on the project page.",
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"count": { "description": "Enable project features counting.", "type": "boolean" },
+				"length": { "description": "Enable length and surface measurement of project features (reinit required after a change).", "type": "boolean" },
+				"labels": { "description": "Enable contribution classification in labels tables (requires database.labels).", "type": "boolean" },
+				"feature_name": { "description": "Name to display to the user for these objects (plural).", "type": "string" },
+				"osmose_tasks": { "description": "Name of the tasks performed via Osmose.", "type": "string" },
+				"osmose_separate_axis": {
+					"description": "Show Osmose issue counts on their own right Y axis in the progress chart, instead of sharing the feature counts axis.",
+					"type": "boolean",
+					"default": false
+				},
+				"points": { "$ref": "#/definitions/points" },
+				"points_labels": {
+					"description": "Points obtained when contributing to a given label: label name -> points per contribution type.",
+					"type": "object",
+					"additionalProperties": { "$ref": "#/definitions/points" }
+				}
+			}
+		},
+		"zoom": { "type": "number", "minimum": 0, "maximum": 24 },
+		"tilesList": {
+			"description": "TMS/XYZ URL list.",
+			"type": "array",
+			"items": { "type": "string" }
+		},
+		"datasource": {
+			"type": "object",
+			"required": ["source"],
+			"additionalProperties": false,
+			"properties": {
+				"source": {
+					"description": "Source type.",
+					"enum": ["osmose", "notes", "osm", "osm-compare", "osm-extra", "background", "stats"]
+				},
+				"name": { "description": "Name to display to the user (legend).", "type": "string" },
+				"description": { "description": "Descriptive text displayed for the object / issue / note.", "type": "string" },
+				"color": { "description": "Layer color (CSS color). Defaults depend on the source.", "type": "string" },
+				"minzoom": { "description": "Minimum zoom level for making this layer visible.", "$ref": "#/definitions/zoom" },
+				"maxzoom": { "description": "Maximum zoom level for making this layer visible.", "$ref": "#/definitions/zoom" },
+				"tiles": {
+					"description": "TMS URL list. For background sources, also \"mapillary\" or \"panoramax\" for street-level imagery.",
+					"oneOf": [
+						{ "$ref": "#/definitions/tilesList" },
+						{ "enum": ["mapillary", "panoramax"] }
+					]
+				},
+				"layers": { "description": "Layer names, matching tiles indices.", "type": "array", "items": { "type": "string" } },
+				"item": { "description": "Osmose item number (four-digit code).", "type": "string", "pattern": "^\\d{4}$" },
+				"class": { "description": "Osmose class number.", "type": ["string", "integer"] },
+				"country": { "description": "Osmose country name pattern (e.g. \"italy*\").", "type": "string" },
+				"subtitles": {
+					"description": "Pattern -> replacement for Osmose report subtitles.",
+					"type": "object",
+					"additionalProperties": { "type": "string" }
+				},
+				"buttons": {
+					"description": "Labels of the edit buttons, e.g. { \"done\": \"It's done\", \"false\": \"Nothing here\" } for Osmose, { \"close\": \"It's done\" } for notes.",
+					"type": "object",
+					"additionalProperties": { "type": "string" }
+				},
+				"terms": { "description": "Terms to search for in OSM notes (singular).", "type": "array", "items": { "type": "string" } },
+				"data": { "description": "GeoJSON data.", "type": "object" },
+				"layer": { "description": "pg_tileserv layer to display (osm-extra only, default public.pdm_project_<slug>).", "type": "string" },
+				"icon": { "description": "Legend symbol (background only).", "enum": ["aerial", "thematic", "picture", "other"], "default": "other" },
+				"attribution": { "description": "Attribution to display on map (background only).", "type": "string" },
+				"tileSize": { "description": "Tile width/height in pixels (background only).", "type": "integer", "default": 256 }
+			},
+			"allOf": [
+				{
+					"if": { "properties": { "source": { "const": "osmose" } } },
+					"then": {
+						"required": ["item", "name"],
+						"propertyNames": { "enum": ["source", "item", "class", "country", "name", "description", "subtitles", "buttons", "color", "minzoom", "maxzoom", "tiles", "layers"] }
+					}
+				},
+				{
+					"if": { "properties": { "source": { "const": "notes" } } },
+					"then": {
+						"required": ["name", "terms"],
+						"propertyNames": { "enum": ["source", "name", "description", "terms", "buttons", "color", "data"] }
+					}
+				},
+				{
+					"if": { "properties": { "source": { "enum": ["osm", "osm-compare"] } } },
+					"then": {
+						"required": ["name"],
+						"propertyNames": { "enum": ["source", "name", "description", "color", "minzoom", "maxzoom", "tiles", "layers"] }
+					}
+				},
+				{
+					"if": { "properties": { "source": { "const": "osm-extra" } } },
+					"then": {
+						"required": ["name"],
+						"propertyNames": { "enum": ["source", "name", "description", "color", "layer", "minzoom", "maxzoom", "tiles", "layers"] }
+					}
+				},
+				{
+					"if": { "properties": { "source": { "const": "background" } } },
+					"then": {
+						"required": ["name", "tiles"],
+						"propertyNames": { "enum": ["source", "name", "icon", "tiles", "attribution", "minzoom", "maxzoom", "tileSize"] }
+					}
+				},
+				{
+					"if": { "properties": { "source": { "const": "stats" } } },
+					"then": {
+						"propertyNames": { "enum": ["source", "minzoom", "maxzoom", "tiles", "layers"] }
+					}
+				}
+			]
+		},
+		"tags": {
+			"description": "OSM tags: key -> value. \"*\" retrieves the value from an external source (e.g. Osmose); \"\" forces removal of the tag.",
+			"type": "object",
+			"additionalProperties": { "type": "string" }
+		},
+		"field": {
+			"type": "object",
+			"required": ["type"],
+			"additionalProperties": false,
+			"properties": {
+				"type": {
+					"description": "Field type.",
+					"enum": ["hidden", "text", "number", "email", "textarea", "select", "2states", "3states", "nsi", "icons"]
+				},
+				"name": { "description": "Field name displayed to the user.", "type": "string" },
+				"tag": { "description": "OSM key set by this field. For select/icons setting several tags, use a placeholder starting with '_' (e.g. \"_select1\").", "type": "string" },
+				"tags": { "$ref": "#/definitions/tags" },
+				"help": { "description": "HREF link to a help page about this field.", "type": ["string", "boolean"] },
+				"description": { "description": "Extensive text displayed to the user about the field.", "type": "string" },
+				"optional": { "description": "true if the field is not mandatory.", "type": "boolean" },
+				"values": { "type": "array", "minItems": 1 },
+				"path": { "description": "NSI path (e.g. \"brands/amenity/fuel\").", "type": "string", "pattern": "^[a-z_]+/[a-z_:]+/[a-z_:]+$" },
+				"locationSet": { "description": "Two-letter lowercase country code to filter NSI entries.", "type": "string", "pattern": "^[a-z]{2}$" }
+			},
+			"allOf": [
+				{
+					"if": { "properties": { "type": { "const": "hidden" } } },
+					"then": { "required": ["tags"], "propertyNames": { "enum": ["type", "tags"] } }
+				},
+				{
+					"if": { "properties": { "type": { "enum": ["text", "number", "email", "textarea", "2states", "3states"] } } },
+					"then": {
+						"required": ["name", "tag"],
+						"propertyNames": { "enum": ["type", "name", "tag", "help", "description", "optional"] }
+					}
+				},
+				{
+					"if": { "properties": { "type": { "const": "select" } } },
+					"then": {
+						"required": ["name", "tag", "values"],
+						"propertyNames": { "enum": ["type", "name", "tag", "help", "description", "optional", "values"] },
+						"properties": {
+							"values": {
+								"items": {
+									"type": "object",
+									"required": ["l"],
+									"additionalProperties": false,
+									"anyOf": [{ "required": ["v"] }, { "required": ["tags"] }],
+									"properties": {
+										"v": { "description": "Value set on the field's tag.", "type": "string" },
+										"l": { "description": "Label shown to the user.", "type": "string" },
+										"tags": { "$ref": "#/definitions/tags" }
+									}
+								}
+							}
+						}
+					}
+				},
+				{
+					"if": { "properties": { "type": { "const": "nsi" } } },
+					"then": {
+						"required": ["name", "path"],
+						"propertyNames": { "enum": ["type", "name", "help", "description", "optional", "path", "locationSet"] }
+					}
+				},
+				{
+					"if": { "properties": { "type": { "const": "icons" } } },
+					"then": {
+						"required": ["name", "tag", "values"],
+						"propertyNames": { "enum": ["type", "name", "tag", "help", "description", "optional", "values"] },
+						"properties": {
+							"values": {
+								"items": {
+									"type": "object",
+									"required": ["icon", "label", "tags"],
+									"additionalProperties": false,
+									"properties": {
+										"icon": { "description": "PNG file name (without extension) in website/images/form.", "type": "string" },
+										"label": { "type": "string" },
+										"tags": { "$ref": "#/definitions/tags" }
+									}
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		"editors": {
+			"description": "Per-editor configuration.",
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"all": {
+					"description": "Settings shared by every editor.",
+					"type": "object",
+					"properties": {
+						"comment": { "description": "Changeset comment.", "type": "string" },
+						"hashtags": { "description": "Comma-separated changeset hashtags, without '#'.", "type": "string", "pattern": "^[^#\\s]+(,[^#\\s]+)*$" }
+					}
+				},
+				"iD": {
+					"description": "iD URL parameters, see https://github.com/openstreetmap/iD/blob/develop/API.md",
+					"type": "object",
+					"additionalProperties": { "type": ["string", "number", "boolean"] }
+				},
+				"JOSM": {
+					"description": "JOSM remote control parameters (e.g. changeset_comment, changeset_hashtags).",
+					"type": "object",
+					"additionalProperties": { "type": ["string", "number", "boolean"] }
+				},
+				"pdm": {
+					"description": "Podoma integrated editor.",
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"fields": {
+							"type": "array",
+							"items": { "$ref": "#/definitions/field" }
+						},
+						"title": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"add": { "description": "Add action label.", "type": "string" },
+								"edit": { "description": "Edit action label.", "type": "string" }
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -85,3 +85,10 @@ volumes:
 
 networks:
   oim-internal:
+    # IPv6 so containers can reach IPv6-preferring hosts (e.g. osm-internal.download.geofabrik.de),
+    # otherwise Python/requests fails with "[Errno 101] Network is unreachable".
+    # Outbound IPv6 is NATed by Docker (ip6tables, default since Docker Engine 27) through the host.
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: fd00:7064:6d::/64

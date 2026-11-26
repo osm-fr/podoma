@@ -121,7 +121,7 @@ Les propriétés dans `info.json` sont les suivantes :
 - `teams` : liste d'équipes utiles à la construction des statistiques et définies par leur nom correspondant à un tableau de noms d'utilisateurs OSM.
 - `statistics` : configuration de l'affichage des statistiques sur la page du projet
 - `statistics.count` : activer le comptage des objets du projet
-- `statistics.length` : activer les mesures de longueurs et de surface des objets du projet. Oblige à réinitialiser le projet en cas de changement.
+- `statistics.length` : activer les mesures de longueurs et de surface des objets du projet. Oblige à réinitialiser le projet en cas de changement. Lorsqu'activé, le graphique de progression et les blocs de statistiques de la page projet affichent aussi la longueur cumulée (en km), sur un axe Y séparé. Avec `statistics.count` et `statistics.length` activés ensemble, la progression est affichée en nombre d'objets et en km.
 - `statistics.labels` : Active la classification des contributions sur les étiquettes. En conséquence, des points de contribution seront aussi attribués aux utilisateurs en fonction des étiquettes.
 - `statistics.feature_name` : nom à afficher à l'utilisateur pour ces objets
 - `statistics.osmose_tasks` : nom des tâches accomplies via Osmose
@@ -619,7 +619,7 @@ Le service s'installe avec les deux commandes suivantes :
 
 ```bash
 docker run --rm [--network=your-network] -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest install
-docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest init
+docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest init_instance
 ```
 La deuxième commande va initialiser chaque projet dans la base de données et peut donner lieu à des temps de traitement importants selon le périmètre configuré.
 
@@ -642,6 +642,13 @@ docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e 
 docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest update_changes {init,update} [keep]
 docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest update_projects [init]
 ```
+
+Lorsqu'un nouveau projet est ajouté à une instance déjà initialisée, initialisez uniquement ce projet (les projets déjà initialisés sont ignorés) et calculez ses dénombrements avec :
+
+```bash
+docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest init_new_projects [keep]
+```
+Redémarrez ensuite le container `run` pour que le site charge le nouveau projet.
 
 Si vous utilisez la mise à jour via Imposm, vous devez avoir un container qui tourne en fond pour gérer les mises à jour régulières :
 

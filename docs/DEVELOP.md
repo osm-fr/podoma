@@ -121,7 +121,7 @@ The properties in `info.json` are as follows:
 - `teams` : list of teams used to build statistics and defined with their name corresponding to a OSM usernames table.
 - `statistics`: configuration of statistics display on the project page
 - `statistics.count`: enable projects features counting
-- `statistics.length` : enable length and surface measurement on projects features. Don't forget to reinit project to enforce any change.
+- `statistics.length` : enable length and surface measurement on projects features. Don't forget to reinit project to enforce any change. When enabled, the progress chart and the statistics blocks of the project page show the cumulated length (in km) too, on a separate Y axis. With both `statistics.count` and `statistics.length` enabled, the progress is shown in number of features and in km.
 - `statistics.labels` : enable contribution classification in labels tables. As a consequence, it produces users contribution on labels too.
 - `statistics.feature_name`: name to display to the user for these objects
 - `statistics.osmose_tasks`: name of the tasks performed via Osmose
@@ -629,7 +629,7 @@ Database is installed and inited simply with:
 
 ```bash
 docker run --rm [--network=your-network] -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest install
-docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest init
+docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest init_instance
 ```
 Second command will init each project in the database. It can lead to significant process times depending on chosen perimeter.
 And then run the server with:
@@ -652,6 +652,13 @@ docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e 
 docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest update_projects [init]s
 ```
 See below for the related documentation.
+
+When a new project is added to an already initialized instance, init only that project (projects already inited are skipped) and compute its counts with:
+
+```bash
+docker run --rm [--network=your-network] -v host_work_dir:container_work_dir -e DB_URL=postgres://user:password@host:5432/database pdm/server:latest init_new_projects [keep]
+```
+Then restart the `run` container so that the website loads the new project.
 
 If you use Imposm updates, you may start and let run another container that handles regular updates as well:
 

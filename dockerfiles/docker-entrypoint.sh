@@ -14,13 +14,23 @@ case $command in
 "install")
     psql -d $DB_URL -f ./db/01_setup_schema.sql
     ;;
-"init")
+"init_instance")
+    # Initial init of an empty instance (full Imposm import + every project from scratch)
     npm run features:update $otherArgs && \
     ./db/11_features_update_tmp.sh init && \
     npm run changes:update $otherArgs && \
     ./db/21_changes_update_tmp.sh init && \
     npm run projects:update $otherArgs && \
     ./db/31_projects_update_tmp.sh $otherArgs
+    ;;
+"init_new_projects")
+    # Init only the projects never inited before on an already initialized instance,
+    # already inited projects are skipped; then compute their counts.
+    # Optional "keep" argument keeps the downloaded OSH PBF file for later use.
+    npm run changes:update $otherArgs && \
+    ./db/21_changes_update_tmp.sh init $otherArgs && \
+    npm run projects:update && \
+    ./db/31_projects_update_tmp.sh
     ;;
 "run")
     npm run changes:update $otherArgs
