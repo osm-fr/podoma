@@ -363,16 +363,35 @@ exports.getMapStyle = (p) => {
 };
 
 // Map style JSON for statistics
+exports.mapStatsLook = {
+	"colors":{
+		"2": "#a32b20",
+		"4": "#186fb6",
+		"6": "#4A148C",
+		"8": "#004D40"
+	},
+	"symbolColors":{
+		"-1": "#92374b",
+		"0": "#737373",
+		"1": "#1c7940"
+	},
+	"deltaColors":{
+		"-1": "#DF0000",
+		"0": "#808080",
+		"1": "#24b424"
+	},
+	"adminZooms":{
+		"2":[0.1,3.9],
+		"4":[4.1, 5.4],
+		"6":[5.6,7.9],
+		"8":[8.1]
+	}
+}
+
 exports.getMapStatsStyle = (p, prjDeltaPerLevel, dailyDeltaPerLevel) => {
 	return fetch(CONFIG.VECT_STYLE, { headers: { "Origin": CONFIG.WEBSITE_URL } })
 	.then(res => res.ok ? res.json() : getFallbackStyle())
 	.then(style => {
-		let colors = {
-			"2": "#a32b20",
-			"4": "#186fb6",
-			"6": "#4A148C",
-			"8": "#004D40"
-		}
 		let maxSizes = {
 			"2": 20,
 			"4": 30,
@@ -382,29 +401,24 @@ exports.getMapStatsStyle = (p, prjDeltaPerLevel, dailyDeltaPerLevel) => {
 		let sources = {};
 		let layers = [];
 		let legend = {};
-		let adminLevels = {
-			"2":[0.1,3.9],
-			"4":[4.1, 5.4],
-			"6":[5.6,7.9],
-			"8":[8.1]
-		}
 
 		if(p && p.statistics && p.statistics.count) {
-			let circleColors = ["match", ["get", "admin_level"]];
+			let circleColors = ["case", ['<', ["get", "delta_project"], 0], mapStatsLook.deltaColors["-1"], ['==', ["get", "delta_project"], 0], mapStatsLook.deltaColors["0"], ['>', ["get", "delta_project"], 0], mapStatsLook.deltaColors["1"]];
 			let circlesRadius = ["match", ["get", "admin_level"]];
 			let circlesStrokeColor = ["match", ["get", "admin_level"]];
 			let circlesStrokeWidth = ["match", ["get", "admin_level"]];
 			let condOpacity = ["interpolate", ["linear"], ["zoom"]];
 			let oldZLevel = null;
+			let minRadius = 3;
 
-			Object.keys(adminLevels).forEach(adminLevel => {
+			Object.keys(mapStatsLook.adminZooms).forEach(adminLevel => {
 				let admLvl = parseInt(adminLevel);
 
 				if (prjDeltaPerLevel.hasOwnProperty(adminLevel)){
 					let minDelta = Math.min(1, prjDeltaPerLevel[adminLevel].max);
 					legend[adminLevel] = {
-						color: colors[adminLevel],
-						minSize: 3,
+						color: mapStatsLook.colors[adminLevel],
+						minSize: minRadius,
 						prjDeltaMin: prjDeltaPerLevel[adminLevel].min,
 						prjDeltaMax: prjDeltaPerLevel[adminLevel].max,
 						dailyDeltaMin: 0,
@@ -415,15 +429,13 @@ exports.getMapStatsStyle = (p, prjDeltaPerLevel, dailyDeltaPerLevel) => {
 
 					if (minDelta < prjDeltaPerLevel[adminLevel].max){
 						circlesRadius.push(admLvl);
-						circlesRadius.push(["interpolate", ["linear"], ["get", "delta_project"], 0, 0, minDelta, 3, parseInt(prjDeltaPerLevel[adminLevel].max), maxSizes[adminLevel]]);
-						circleColors.push(admLvl);
-						circleColors.push(colors[adminLevel]);
+						circlesRadius.push(["interpolate", ["linear"], ["abs", ["get", "delta_project"]], 0, minRadius, minDelta, minRadius, parseInt(prjDeltaPerLevel[adminLevel].max), maxSizes[adminLevel]]);
 
 						if (oldZLevel != null){
 							condOpacity.push(oldZLevel+0.1);
 							condOpacity.push(0);
 						}
-						for (zLevel of adminLevels[adminLevel]){
+						for (zLevel of mapStatsLook.adminZooms[adminLevel]){
 							condOpacity.push(zLevel, ["case", ["==", ["get", "admin_level"], admLvl], 1, 0 ]);
 							oldZLevel = zLevel;
 						}
@@ -441,11 +453,15 @@ exports.getMapStatsStyle = (p, prjDeltaPerLevel, dailyDeltaPerLevel) => {
 						let strColorInterpolate = ["interpolate", ["linear"], ["get", "delta_daily"]];
 
 						strWidthInterpolate.push(Math.min(-3, dailyDeltaMin), 4);
-						strColorInterpolate.push(Math.min(-3, dailyDeltaMin), "#DF0000");
-						strWidthInterpolate.push(0, 2);
-						strColorInterpolate.push(0, "#FFFFFF");
+						strColorInterpolate.push(Math.min(-3, dailyDeltaMin), mapStatsLook.deltaColors["-1"]);
+						strWidthInterpolate.push(-1, 1.5);
+						strColorInterpolate.push(-1, "#FFFFFF");
+						strWidthInterpolate.push(0, 1.5);
+						strColorInterpolate.push(0, mapStatsLook.deltaColors["0"]);
+						strWidthInterpolate.push(1, 1.5);
+						strColorInterpolate.push(1, "#FFFFFF");
 						strWidthInterpolate.push(Math.max(3, dailyDeltaMax), 4);
-						strColorInterpolate.push(Math.max(3, dailyDeltaMax), "#24b424");
+						strColorInterpolate.push(Math.max(3, dailyDeltaMax), mapStatsLook.deltaColors["+1"]);
 
 						circlesStrokeWidth.push(admLvl);
 						circlesStrokeWidth.push(strWidthInterpolate);
@@ -456,7 +472,7 @@ exports.getMapStatsStyle = (p, prjDeltaPerLevel, dailyDeltaPerLevel) => {
 			});
 			circlesRadius.push(0);
 			circleColors.push ("#999999");
-			circlesStrokeWidth.push(2);
+			circlesStrokeWidth.push(1.5);
 			circlesStrokeColor.push ("#FFFFFF");
 
 			// Source stats
